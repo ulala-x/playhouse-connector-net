@@ -1,0 +1,15 @@
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\bin\Debug\net6.0\playhouse-connector-net-sample.exe
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\bin\Debug\net6.0\playhouse-connector-net-sample.deps.json
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\bin\Debug\net6.0\playhouse-connector-net-sample.runtimeconfig.json
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\bin\Debug\net6.0\playhouse-connector-net-sample.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\bin\Debug\net6.0\playhouse-connector-net-sample.pdb
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.csproj.AssemblyReference.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.GeneratedMSBuildEditorConfig.editorconfig
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.AssemblyInfoInputs.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.AssemblyInfo.cs
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.csproj.CoreCompileInputs.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\refint\playhouse-connector-net-sample.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.pdb
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\playhouse-connector-net-sample.genruntimeconfig.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net-sample\obj\Debug\net6.0\ref\playhouse-connector-net-sample.dll

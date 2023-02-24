@@ -1,0 +1,13 @@
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.csproj.AssemblyReference.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.GeneratedMSBuildEditorConfig.editorconfig
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.AssemblyInfoInputs.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.AssemblyInfo.cs
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.csproj.CoreCompileInputs.cache
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\playhouse-connector-net.deps.json
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\playhouse-connector-net.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\playhouse-connector-net.pdb
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\NetCoreServer.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\NetCoreServer.pdb
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.csproj.CopyComplete
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.dll
+E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\playhouse-connector-net.pdb

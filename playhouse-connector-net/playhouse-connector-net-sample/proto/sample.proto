@@ -1,0 +1,108 @@
+﻿syntax = "proto3";
+
+package playhouse.sample;
+
+
+message AuthenticateReq{
+  int64 user_id = 1;
+  string token = 2;
+}
+
+message AuthenticateRes{
+  string userInfo = 1;
+}
+
+message HelloReq{
+  string message = 1;
+}
+
+message HelloRes{
+  string message = 1;
+}
+
+message SessionUpdateMsg{
+  string sessionInfo = 1;
+}
+
+message SessionInfoReq {
+}
+
+message SessionInfoRes {
+  string sessionInfo = 1;
+}
+
+message CloseSessionMsg{
+}
+
+/////////////
+message CreateRoomReq{
+  string data = 1;
+}
+message CreateRoomRes{
+  int64 room_id = 1;
+  string data = 2;
+  string roomEndpoint = 3;
+}
+message JoinRoomReq{
+  string roomEndpoint = 1;
+  int64 room_id = 2;
+  int64 user_id = 3;
+  string data = 4;
+}
+message JoinRoomRes{
+  string data = 1;
+}
+
+message CreateJoinRoomReq {
+  string roomEndpoint = 1;
+  int64 room_id = 2;
+  int64 user_id = 3;
+  string data = 4;
+}
+message CreateJoinRoomRes {
+  string data = 1;
+}
+
+message LeaveRoomNotify{
+  string data = 1;
+  string sessionEndpoint = 2;
+  int32 sid = 3;
+
+}
+
+//////////////////for room/////////////
+message CreateRoomAsk{
+  string data = 1;
+}
+message CreateRoomAnswer{
+  string data = 1;
+}
+message JoinRoomAsk{
+  string data = 1;
+}
+message JoinRoomAnswer{
+  string data = 1;
+}
+
+message CreateJoinRoomAsk{
+  string data = 1;
+}
+message CreateJoinRoomAnswer{
+  string data = 1;
+}
+message LeaveRoomReq{
+  string data = 1;
+}
+message LeaveRoomRes{
+  string data = 1;
+}
+message ChatMsg {
+  string data = 1;
+}
+
+message HelloToApiReq {
+  string data = 1;
+}
+message HelloToApiRes{
+  string data = 1;
+}

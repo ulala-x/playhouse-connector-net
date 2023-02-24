@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {}
+  },
+  "projects": {
+    "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
+        "projectName": "playhouse-connector-net",
+        "projectPath": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
+        "packagesPath": "C:\\Users\\LifeMMO\\.nuget\\packages\\",
+        "outputPath": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\LifeMMO\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.1"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.1": {
+            "targetAlias": "netstandard2.1",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
+          "dependencies": {
+            "Google.Protobuf": {
+              "target": "Package",
+              "version": "[3.22.0, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.12.0, )"
+            },
+            "System.Runtime.Caching": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "System.ServiceModel.Primitives": {
+              "target": "Package",
+              "version": "[4.10.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "NETStandard.Library": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.103\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
