@@ -1,7 +1,9 @@
 ﻿using PlayHouseConnector.network;
 using System;
 using playhouse_connector_net.network;
-using System.Collections;
+using System.Threading.Tasks;
+using System.Threading;
+using CommonLib;
 
 namespace PlayHouseConnector
 {
@@ -15,15 +17,10 @@ namespace PlayHouseConnector
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;
-        public event Action<string,Packet>? OnReceive;
+        public event Action<short, Packet>? OnReceive;
         public event Action? OnDiconnect;
 
-
-        public IEnumerator StartForUnity()
-        {
-            return AsyncManager.Instance.MainThreadActionCoroutine();
-        }
-
+        
         public void Start()
         {
             AsyncManager.Instance.MainThreadAction();
@@ -34,6 +31,8 @@ namespace PlayHouseConnector
         {            
             _connectorConfig = config;
             _requestCache = new RequestCache(config.ReqestTimeout);
+
+            PooledBuffer.Init(1024 * 1024);
         }
         
 
@@ -42,11 +41,11 @@ namespace PlayHouseConnector
 
             if (_connectorConfig.UseWebsocket)
             {
-                _clientNetwork = new ClientNetwork(new network.WsClient(host, port, this));
+                _clientNetwork = new ClientNetwork(new WsClient(host, port, this, _requestCache));
             }
             else
             {
-                _clientNetwork = new ClientNetwork(new network.TcpClient(host,port,this));                
+                _clientNetwork = new ClientNetwork(new TcpClient(host,port,this, _requestCache));                
             }
 
             _clientNetwork.Connect();
@@ -60,23 +59,31 @@ namespace PlayHouseConnector
         {
             return _clientNetwork!.IsConnect();
         }
-        public void Send(string serviceId,Packet packet) 
+        public void Send(short serviceId,Packet packet) 
         {
-            using (var clientPacket = ClientPacket.ToServerOf(serviceId, packet))
-            {
-                _clientNetwork!.Send(serviceId, clientPacket);
-            }   
+            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
+            _clientNetwork!.Send(serviceId, clientPacket);
         }
-        public void Request(string serviceId,Packet packet,Action<ReplyPacket> callback) 
+        public void Request(short serviceId,Packet packet,Action<IReplyPacket> callback) 
         { 
-            int seq = _requestCache.GetSequence();
+            short seq = (short)_requestCache.GetSequence();
             _requestCache.Put(seq,new ReplyObject(callback));
-            using (var clientPacket = ClientPacket.ToServerOf(serviceId, packet))
-            {
-                clientPacket.SetMsgSeq(seq);
-                _clientNetwork!.Send(serviceId, clientPacket);
-            }
-                
+            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
+            clientPacket.SetMsgSeq(seq);
+            _clientNetwork!.Send(serviceId, clientPacket);
+            
+        }
+
+        public async Task<IReplyPacket> Request(short serviceId, Packet packet)
+        {
+            short seq = (short)_requestCache.GetSequence(); 
+            var deferred = new TaskCompletionSource<ReplyPacket>();
+            _requestCache.Put(seq, new ReplyObject(null,deferred));
+            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
+            clientPacket.SetMsgSeq(seq);
+            _clientNetwork!.Send(serviceId, clientPacket);
+            
+            return await deferred.Task;
         }
 
         internal void CallReconnect(int retryCnt)
@@ -89,7 +96,7 @@ namespace PlayHouseConnector
             OnConnect?.Invoke();
         }
 
-        internal void CallReceive(string serviceId, Packet packet)
+        internal void CallReceive(short serviceId, Packet packet)
         {
             OnReceive?.Invoke(serviceId, packet);
         }

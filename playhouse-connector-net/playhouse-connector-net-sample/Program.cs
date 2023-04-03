@@ -1,6 +1,7 @@
 ﻿using Playhouse.Sample;
 using playhouse_connector_net;
 using PlayHouseConnector;
+using PlayHouse;
 
 namespace playhouse_connector_net_sample
 {
@@ -18,7 +19,7 @@ namespace playhouse_connector_net_sample
             connector.Start();
 
             connector.Connect("127.0.0.1", 10001);
-            String serviceId = "Api";
+            short serviceId = 2;
 
             var authenticateReq = new AuthenticateReq();
             authenticateReq.UserId= 1;
@@ -39,19 +40,22 @@ namespace playhouse_connector_net_sample
                 Console.WriteLine($"OnConnected {retryCnt}");
             };
 
-            connector.OnReceive += (String serviceId, Packet packet) =>
+            connector.OnReceive += (short serviceId, Packet packet) =>
             {
-                Console.WriteLine($"OnReceive {serviceId},{packet.MsgName}");
+                Console.WriteLine($"OnReceive {serviceId},{packet.MsgId}");
             };
 
 
 
-            connector.Request(serviceId, new Packet(authenticateReq), (ReplyPacket replyPacket) =>
+            connector.Request(serviceId, new Packet(authenticateReq), (IReplyPacket replyPacket) =>
             {
-                if(replyPacket.ErrorCode == 0)
+                using (replyPacket)
                 {
-
-                }
+                    if (replyPacket.ErrorCode == 0)
+                    {
+                        AuthenticateRes authenticateRes = AuthenticateRes.Parser.ParseFrom(replyPacket.Data);
+                    }
+                }   
             });
             
 

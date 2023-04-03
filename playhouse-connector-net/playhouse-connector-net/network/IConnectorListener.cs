@@ -1,18 +1,11 @@
-﻿using playhouse_connector_net;
-using PlayHouseConnector;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PlayHouseConnector.network;
 
 namespace playhouse_connector_net.network
 {
     public interface IConnectorListener
     {
         void OnConnected();
-        void OnReceive(string serviceId, Packet packet);
+        void OnReceive(ClientPacket clientPacket);
         void OnDisconnected();
         
     }

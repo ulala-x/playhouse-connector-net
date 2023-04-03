@@ -1,6 +1,6 @@
 ﻿using playhouse_connector_net.network;
 using PlayHouseConnector;
-using Serilog;
+using PlayHouseConnector.network;
 using System.Collections.Concurrent;
 
 namespace playhouse_connector_net_sample
@@ -12,17 +12,17 @@ namespace playhouse_connector_net_sample
 
         public void OnConnected()
         {
-            Log.Information($"onConnected");
+            LOG.Info($"onConnected",GetType());
         }
 
         public void OnDisconnected()
         {
-            Log.Information($"onConnected");
+            LOG.Info($"OnDisconnected", GetType());
         }
 
-        public void OnReceive(string serviceId, Packet packet)
+        public void OnReceive(ClientPacket clientPacket)
         {
-            _packetQueue.Enqueue(packet);
+            _packetQueue.Enqueue(clientPacket.ToPacket());
         }
     }
 }

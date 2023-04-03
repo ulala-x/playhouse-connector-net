@@ -30,17 +30,7 @@ namespace playhouse_connector_net.network
             _mainThreadActions.Enqueue(action);
         }
 
-        //public void RunAync(Action action)
-        //{
-        //    Thread thread = new Thread(new ThreadStart(out action));
-        //    thread.Name = "AsyncManage Thread";
-        //    thread.Start();
 
-        //    //ThreadPool.QueueUserWorkItem((object state) =>
-        //    //{
-        //    //    action();
-        //    //});
-        //}
         public IEnumerator MainThreadActionCoroutine()
         {
             while (!_isClose)
@@ -67,7 +57,7 @@ namespace playhouse_connector_net.network
                     {
                         action.Invoke();
                     }
-                    Thread.Sleep(50);
+                    Thread.Sleep(10);
                 }
             }));
             thread.Name = "AsyncManage Thread";

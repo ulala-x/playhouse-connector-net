@@ -1,9 +1,10 @@
 ﻿
+using CommonLib;
 using NetCoreServer;
 using playhouse_connector_net.network;
-using PlayHouseConnector.network.buffer;
-using Serilog;
 using System;
+using System.Net.NetworkInformation;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 
@@ -11,18 +12,21 @@ namespace PlayHouseConnector.network
 {
     class WsClient : NetCoreServer.WsClient, IClient
     {
-        private ILogger _log = Log.ForContext<TcpClient>();
-
         private IConnectorListener _connectorListener;
         private PacketParser _packetParser = new PacketParser();
+        private RingBuffer _recvBuffer = new RingBuffer(1024*1024);
+        private static RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
+        private RingBufferStream _queueStream ;
         private bool _stop;
 
 
-        public WsClient(string host, int port, Connector connector) : base(host, port)
+        public WsClient(string host, int port, Connector connector, RequestCache requestCache) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this);
+            _connectorListener = new ConnectorListener(connector, this, requestCache);
 
             base.OptionNoDelay = true;
+
+            _queueStream = new RingBufferStream(_recvBuffer);
         }
 
         public void DisconnectAndStop()
@@ -50,7 +54,7 @@ namespace PlayHouseConnector.network
         {
             _stop = false;
 
-            _log.Information($"Connected id:{Id}");
+            LOG.Info($"Connected id:{Id}", GetType());
             Console.WriteLine($"Chat WebSocket client connected a new session with Id {Id}");
             _connectorListener.OnConnected();
         }
@@ -61,10 +65,11 @@ namespace PlayHouseConnector.network
 
             Console.WriteLine($"Incoming: {Encoding.UTF8.GetString(buffer, (int)offset, (int)size)}");
 
-            var packetBuffer = new PBuffer((int)size);
-            packetBuffer.Append(buffer,offset, size);
-            var packets = _packetParser.Parse(packetBuffer);
-            packets.ForEach(packet => { _connectorListener.OnReceive(packet.ServiceId(),packet.ToPacket()); });
+            _queueStream.Write(buffer, (int)offset, (int)size);
+            var packets = _packetParser.Parse(_recvBuffer);
+            packets.ForEach(packet => { 
+                _connectorListener.OnReceive(packet); 
+            });
             
         }
 
@@ -92,19 +97,13 @@ namespace PlayHouseConnector.network
             return base.IsConnected;
         }
 
-        public void Send(string serviceId, ClientPacket clientPacket)
+        public void Send(short serviceId, ClientPacket clientPacket)
         {
-            using (var buffer = clientPacket.ToByteBuffer())
+            using (clientPacket)
             {
-                base.Send(buffer.Data);
-            }
-        }
-
-        public void SendAsync(string serviceId, ClientPacket clientPacket)
-        {
-            using (var buffer = clientPacket.ToByteBuffer())
-            {
-                base.SendAsync(buffer.Data);
+                _sendBuffer.Clear();
+                clientPacket.GetBytes(_sendBuffer);
+                base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
             }
         }
 
@@ -113,9 +112,6 @@ namespace PlayHouseConnector.network
             return _stop;
         }
 
-        void IClient.ConnectAsync()
-        {
-            base.ConnectAsync();
-        }
+   
     }
 }

@@ -11,3 +11,16 @@ E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhous
 E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.csproj.CopyComplete
 E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.dll
 E:\work\ulala-the-great\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.pdb
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Release\netstandard2.1\playhouse-connector-net.deps.json
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Release\netstandard2.1\playhouse-connector-net.dll
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Release\netstandard2.1\playhouse-connector-net.pdb
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Release\netstandard2.1\NetCoreServer.dll
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Release\netstandard2.1\NetCoreServer.pdb
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.csproj.AssemblyReference.cache
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.GeneratedMSBuildEditorConfig.editorconfig
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.AssemblyInfoInputs.cache
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.AssemblyInfo.cs
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.csproj.CoreCompileInputs.cache
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.csproj.CopyComplete
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.dll
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Release\netstandard2.1\playhouse-connector-net.pdb

@@ -1,6 +1,4 @@
-﻿using playhouse_connector_net;
-using playhouse_connector_net.network;
-using Serilog;
+﻿using playhouse_connector_net.network;
 using System;
 using System.Runtime.Caching;
 using System.Threading;
@@ -14,24 +12,20 @@ namespace PlayHouseConnector.network
         private TaskCompletionSource<ReplyPacket>? _taskCompletionSource= null;
         public ReplyObject(Action<ReplyPacket>? callback = null, TaskCompletionSource<ReplyPacket>? taskCompletionSource = null)  
         { 
-            this._replyCallback = callback;
-            this._taskCompletionSource = taskCompletionSource;
+            _replyCallback = callback;
+            _taskCompletionSource = taskCompletionSource;
         }
 
         public void OnReceive(ReplyPacket replayPacket)
         {
-            using (replayPacket)
+            AsyncManager.Instance.AddJob(() =>
             {
-                AsyncManager.Instance.AddJob(() =>
-                {
-                    _replyCallback?.Invoke(replayPacket);
-                    _taskCompletionSource?.SetResult(replayPacket);
-                });
-                
-            }
+                _replyCallback?.Invoke(replayPacket);
+                _taskCompletionSource?.SetResult(replayPacket);
+            });
         }
 
-        public void Throw(int errorCode)
+        public void Throw(short errorCode)
         {
             AsyncManager.Instance.AddJob(() =>
             {
@@ -44,13 +38,16 @@ namespace PlayHouseConnector.network
     }
     public class RequestCache
     {
-        private ILogger _log = Log.ForContext<RequestCache>();
         private int _atomicInt;
         private CacheItemPolicy _policy;
 
         public RequestCache(int timeout) 
         {
-            _policy = new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(timeout) };
+            _policy = new CacheItemPolicy() ;
+            if(timeout > 0) {
+                _policy.AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(timeout);
+            }
+            
 
             // Set a callback to be called when the cache item is removed
             _policy.RemovedCallback = new CacheEntryRemovedCallback((args) => {
@@ -84,14 +81,16 @@ namespace PlayHouseConnector.network
         public void OnReply(ClientPacket clientPacket)
         {
             int msgSeq = clientPacket.GetMsgSeq();
-            ReplyObject replyObject = (ReplyObject)MemoryCache.Default.Get(msgSeq.ToString());
+            string key = msgSeq.ToString();
+            ReplyObject replyObject = (ReplyObject)MemoryCache.Default.Get(key);
 
             if (replyObject != null) { 
                 replyObject.OnReceive(clientPacket.ToReplyPacket());
+                MemoryCache.Default.Remove(key);
             }
             else
             {
-                _log.Error($"{msgSeq},${clientPacket.MsgName()} request is not exist");
+                LOG.Error($"{msgSeq},${clientPacket.GetMsgId()} request is not exist",GetType());
             }
         }
     }

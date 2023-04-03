@@ -1,129 +1,226 @@
-﻿using PlayHouseConnector.network.buffer;
+﻿using CommonLib;
+using Google.Protobuf;
+using NetCoreServer;
+using playhouse_connector_net;
 using System;
-using System.Net;
+using System.IO;
 
 namespace PlayHouseConnector.network
 {
     public class Header
     {
-        public String MsgName { get; set; }
-        public int ErrorCode { get; set; }
-        public int MsgSeq{ get; set; }
-        public String ServiceId { get; set; }
+        public short ServiceId { get; set; }
+        public short MsgId { get; set; }
+        public short MsgSeq { get; set; }
+        public short ErrorCode { get; set; }
 
-        public Header(String serviceId="",String msgName="", int msgSeq=0,int errorCode=0)
+
+        public Header(short serviceId = -1, short msgId =-1, short msgSeq = 0,short errorCode= 0)
         {
-            MsgName = msgName;
+            MsgId = msgId;
             ErrorCode = errorCode;
             MsgSeq = msgSeq;
             ServiceId = serviceId;
         }
 
-        public static Header Of(HeaderMsg headerMsg)
-        {
-            return new Header(headerMsg.ServiceId, headerMsg.MsgName, headerMsg.MsgSeq, headerMsg.ErrorCode);
-        }
+        //public static Header Of(HeaderMsg headerMsg)
+        //{
+        //    return new Header(headerMsg.ServiceId, headerMsg.MsgName, headerMsg.MsgSeq, headerMsg.ErrorCode);
+        //}
 
-        public HeaderMsg ToMsg()
-        {
-            var headerMsg = new HeaderMsg();
-            headerMsg.MsgName = MsgName;
-            headerMsg.MsgSeq = MsgSeq;                
-            headerMsg.ErrorCode = ErrorCode;
-            return headerMsg;
+        //public HeaderMsg ToMsg()
+        //{
+        //    var headerMsg = new HeaderMsg();
+        //    headerMsg.MsgName = MsgName;
+        //    headerMsg.MsgSeq = MsgSeq;                
+        //    headerMsg.ErrorCode = ErrorCode;
+        //    return headerMsg;
 
-        }
+        //}
     }
-    public class ClientPacket : IDisposable
+
+    public class PooledBufferPayload : IPayload
     {
-        private Header _header;
-        private PBuffer? _buffer ;
+        private readonly PooledBuffer _buffer;
 
-        public ClientPacket(Header header, PBuffer buffer)
+        public PooledBufferPayload(PooledBuffer buffer)
         {
-            this._header = header;
-            this._buffer = buffer;  
+            _buffer = buffer;
         }
 
-        public String ServiceId()
-        {
-            return _header.ServiceId;
-        }
 
-        public String MsgName()
+        public void Output(Stream outputStream)
         {
-            return _header.MsgName;
-
-        }
-
-        public Packet ToPacket()
-        {
-            return new Packet(MsgName(),_buffer!);
-        }
-
-        public static ClientPacket ToServerOf(string serviceId, Packet packet)
-        {
-            return new ClientPacket(new Header(serviceId, packet.MsgName),packet.MoveBuffer());
-        }
-
-        internal PBuffer ToByteBuffer()
-        {
-            var headerMsg = this._header.ToMsg();
-            short headerSize = (short)headerMsg.CalculateSize();
-            var packetSize = 1+2+headerSize+_buffer!.Size;
-            
-            var buffer = new PBuffer(packetSize);
-           
-            buffer.Append((byte)headerSize);
-            buffer.Append(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(headerSize)));
-            buffer.Append(this._buffer);
-                                    
-            return buffer;            
+            outputStream.Write(_buffer.Data, 0, _buffer.Data.Length);
         }
 
         public void Dispose()
         {
-            if(_buffer != null)
-            {
-               this._buffer.Dispose();
-            }
+            _buffer.Dispose();
         }
 
-        private PBuffer? MoveBuffer()
+        public PooledBuffer GetBuffer()
         {
-            if (_buffer == null) return null;
+            return _buffer;
+        }
 
-            var temp = _buffer;
-            _buffer = null;
-            return temp!;
+        public (byte[], int) Data => (_buffer.Data, _buffer.Size);
+    }
+
+    public class ReplyPacket : IReplyPacket
+    {
+        public short ErrorCode { get; private set; }
+        public short MsgId { get; private set; }
+
+
+        private IPayload _payload;
+
+        public ReplyPacket(short errorCode, short msgId, IPayload payload)
+        {
+            this.ErrorCode = errorCode;
+            this.MsgId = msgId;
+            this._payload = payload;
+        }
+
+        public ReplyPacket(short errorCode = 0, short msgId = -1) : this(errorCode, msgId, new EmptyPayload()) { }
+
+        public bool IsSuccess()
+        {
+            return ErrorCode == 0;
+        }
+
+        public void Dispose()
+        {
+            _payload.Dispose();
+        }
+
+        public (byte[],int) Data =>_payload.Data;
+
+    }
+
+
+    public class ClientPacket : IBasePacket
+    {
+
+
+        public Header Header { get; set; }
+        public IPayload Payload;
+
+        public ClientPacket(Header header, IPayload payload)
+        {
+            Header = header;
+            Payload = payload;
+        }
+
+        public void Dispose()
+        {
+            Payload.Dispose();
+
+        }
+
+        public IPayload MovePayload()
+        {
+            IPayload temp = Payload;
+            Payload = new EmptyPayload();
+            return temp;
+        }
+
+        public int GetMsgSeq()
+        {
+            return Header.MsgSeq;
+        }
+
+        public short GetMsgId()
+        {
+            return Header.MsgId;
+        }
+
+
+        public short ServiceId()
+        {
+            return Header.ServiceId;
+        }
+
+        public Packet ToPacket()
+        {
+            return new Packet(Header.MsgId, MovePayload());
+        }
+
+        internal static ClientPacket ToServerOf(short serviceId, Packet packet)
+        {
+            return new ClientPacket(new Header(serviceId, packet.MsgId), packet.Payload);
+        }
+
+        internal void GetBytes(RingBuffer buffer)
+        {
+            int offset = (int)buffer.Count;
+
+            int bodyIndex = buffer.WriteInt16(0);
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
+            
+            RingBufferStream stream = new RingBufferStream(buffer);
+            Payload.Output(stream);
+
+            int bodySize = buffer.Count - (offset + 8);
+
+            if (bodySize > PacketParser.MAX_PACKET_SIZE)
+            {
+                throw new Exception($"body size is over : {bodySize}");
+            }
+
+            buffer.ReplaceInt16(bodyIndex, XBitConverter.ToNetworkOrder((short)bodySize));
+        }
+
+        internal void SetMsgSeq(short seq)
+        {
+            Header.MsgSeq = seq;
+        }
+
+        internal static ReplyPacket OfErrorPacket(short errorCode)
+        {
+            return new ReplyPacket(errorCode, -1, new EmptyPayload());
+
         }
 
         public ReplyPacket ToReplyPacket()
         {
-            return new ReplyPacket(_header.ErrorCode, _header.MsgName, MoveBuffer());
+            return new ReplyPacket(Header.ErrorCode, Header.MsgId, MovePayload());
         }
 
-
-
-        public int GetMsgSeq()
-        {
-            return _header.MsgSeq;
-        }
-
-        internal int GetErrorCode()
-        {
-            return _header.ErrorCode; 
-        }
-
-        internal void SetMsgSeq(int seq)
-        {
-            _header.MsgSeq = seq;
-        }
-
-        internal static ReplyPacket OfErrorPacket(int errorCode)
-        {
-            return new ReplyPacket(errorCode, "", null);
-                
-        }
     }
 }
+
+
+
+//internal void GetBytes(PreAllocByteArrayOutputStream outputStream)
+//{
+//    var headerMsg = this._header.ToMsg();
+//    byte headerSize = (byte)headerMsg.CalculateSize();
+//    short bodySize = (short)_buffer!.Size;
+//    var packetSize = 1 + 2 + headerSize + bodySize;
+
+//    outputStream.WriteByte(headerSize);
+//    outputStream.WriteShort(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bodySize))));
+
+
+//        }
+
+
+//        internal Span<byte> ToByteBuffer()
+//{
+//    var headerMsg = this._header.ToMsg();
+//    byte headerSize = (byte)headerMsg.CalculateSize();
+//    short bodySize = (short)_buffer!.Size;
+//    var packetSize = 1 + 2 + headerSize + bodySize;
+
+//    var buffer = new PooledBuffer(packetSize);
+
+//    buffer.Append(headerSize);
+//    buffer.Append();
+//    buffer.Append(headerMsg.ToByteArray());
+//    buffer.Append(this._buffer);
+
+//    return buffer;
+//}

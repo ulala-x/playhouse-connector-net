@@ -1,9 +1,7 @@
-﻿using playhouse_connector_net.network;
-using PlayHouseConnector.network.buffer;
-using Serilog;
+﻿using CommonLib;
+using playhouse_connector_net.network;
 using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
+using System.IO;
 using System.Text;
 using System.Threading;
 
@@ -11,12 +9,16 @@ namespace PlayHouseConnector.network
 {
     class TcpClient : NetCoreServer.TcpClient, IClient
     {
-        private ILogger _log = Log.ForContext<TcpClient>();
 
         private IConnectorListener _connectorListener;
 
-        private PBuffer _buffer = new PBuffer(1024 * 4);
+        //private PreAllocByteArrayOutputStream _outputStream = new PreAllocByteArrayOutputStream(new byte[PacketParser.MAX_PACKET_SIZE]);
+        //private MemoryStream _outputStream  = new MemoryStream(new byte[PacketParser.MAX_PACKET_SIZE]);
+        
         private PacketParser _packetParser = new PacketParser();
+        private RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
+        private static RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
+        private RingBufferStream _stream;
         private bool _stop = false;
 
         public void DisconnectAndStop()
@@ -28,14 +30,15 @@ namespace PlayHouseConnector.network
         }
 
 
-        public TcpClient(string host, int port,Connector connector) : base(host, port)
+        public TcpClient(string host, int port,Connector connector, RequestCache requestCache) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this);
+            _connectorListener = new ConnectorListener(connector, this, requestCache);
+            _stream = new RingBufferStream(_recvBuffer);
         }
 
         protected override void OnConnected()
         {
-            _log.Information($"Connected id:{Id}");
+            LOG.Info($"Connected id:{Id}",GetType());
             Console.WriteLine($"Chat WebSocket client connected a new session with Id {Id}");
 
             _connectorListener.OnConnected();
@@ -55,16 +58,16 @@ namespace PlayHouseConnector.network
         {
             try
             {
-                _buffer.Append(buffer, offset, size);
-                var packets = _packetParser.Parse(_buffer);
+                _stream.Write(buffer, (int)offset, (int)size);
+                var packets = _packetParser.Parse(_recvBuffer);
                 packets.ForEach(packet => {
-                        _connectorListener.OnReceive(packet.ServiceId(), packet.ToPacket());
+                        _connectorListener.OnReceive(packet);
                 });
 
             }
             catch (Exception ex)
             {
-                _log.Error("packet  exception occurred , disconnect connection: {0}", ex.ToString());
+                LOG.Error($"packet  exception occurred , disconnect connection: {ex}",GetType(),ex);
                 Disconnect();
             }
 
@@ -86,30 +89,27 @@ namespace PlayHouseConnector.network
             return base.IsConnected;
         }
 
-        public void Send(string serviceId, ClientPacket clientPacket)
+        public void Send(short serviceId, ClientPacket clientPacket)
         {
-            using (var buffer = clientPacket.ToByteBuffer())
+            using (clientPacket)
             {
-                base.Send(buffer.Data);
+                _sendBuffer.Clear();
+                clientPacket.GetBytes(_sendBuffer);
+                base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
             }
         }
 
-        public void SendAsync(string serviceId, ClientPacket clientPacket)
-        {   
-            using (var buffer = clientPacket.ToByteBuffer())
-            {
-                base.SendAsync(buffer.Data);
-            }
-        }
+        //public void SendAsync(string serviceId, ClientPacket clientPacket)
+        //{
+        //    _outputStream.Reset();
+        //    clientPacket.GetBytes(_outputStream);
+        //    base.SendAsync(_outputStream.GetBuffer(), 0, _outputStream.WrittenDataLength());
+        //}
 
         public bool IsStoped()
         {
             return _stop;
         }
 
-        void IClient.ConnectAsync()
-        {
-            base.ConnectAsync();
-        }
     }
 }

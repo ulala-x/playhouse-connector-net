@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {}
+    "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {}
   },
   "projects": {
-    "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {
+    "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
+        "projectUniqueName": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
         "projectName": "playhouse-connector-net",
-        "projectPath": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
-        "packagesPath": "C:\\Users\\LifeMMO\\.nuget\\packages\\",
-        "outputPath": "E:\\work\\ulala-the-great\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\obj\\",
+        "projectPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net.csproj",
+        "packagesPath": "C:\\Users\\hep7\\.nuget\\packages\\",
+        "outputPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\LifeMMO\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\hep7\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -48,10 +48,6 @@
               "target": "Package",
               "version": "[7.0.0, )"
             },
-            "Serilog": {
-              "target": "Package",
-              "version": "[2.12.0, )"
-            },
             "System.Runtime.Caching": {
               "target": "Package",
               "version": "[7.0.0, )"
@@ -77,7 +73,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.103\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.200\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -3,7 +3,7 @@
 package PlayHouseConnector;
 /**
 client packet
-1byte header size + header + body
+1byte header size + 2byte body size + header + body
  */
 
 message HeaderMsg {
@@ -24,7 +24,7 @@ message PacketMsg {
 enum BaseErrorCode{
   SUCCESS = 0;
   SYSTEM_ERROR = -1;
-  UNCHECKED_CONTENTS_ERROR = -22;
+  UNCHECKED_CONTENTS_ERROR = -2;
   REQUEST_TIMEOUT = -3;
 
 }

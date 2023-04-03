@@ -13,11 +13,13 @@ namespace playhouse_connector_net.network
         private IClient _client;
 
         private int _retryCnt = 0;
+        private RequestCache _requestCache;
         
-        public ConnectorListener(Connector connector,IClient client)
+        public ConnectorListener(Connector connector,IClient client, RequestCache requestCache)
         {
            _connector = connector;
            _client = client;
+            _requestCache = requestCache;
         }
 
         public void OnConnected()
@@ -48,7 +50,7 @@ namespace playhouse_connector_net.network
             {
                 _retryCnt++;
                 Thread.Sleep(reconnectCount * 1000);
-                _client.ConnectAsync();
+                _client.ClientConnect();
             }
             else
             {
@@ -59,15 +61,23 @@ namespace playhouse_connector_net.network
             }
         }
 
-        public void OnReceive(string serviceId, Packet packet)
+        public void OnReceive(ClientPacket clientPacket)
         {
+
             AsyncManager.Instance.AddJob(() =>
             {
-                _connector.CallReceive(serviceId, packet);
+                if (clientPacket.GetMsgSeq() > 0)
+                {
+                    _requestCache.OnReply(clientPacket);
+                }
+                else
+                {
+                    _connector.CallReceive(clientPacket.ServiceId(), clientPacket.ToPacket());
+                }
+                
             });
-            
         }
 
-        
+
     }
 }

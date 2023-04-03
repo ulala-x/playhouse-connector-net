@@ -1,94 +1,53 @@
 ﻿using Google.Protobuf;
 using playhouse_connector_net;
-using PlayHouseConnector.network;
-using PlayHouseConnector.network.buffer;
 using System;
-using System.Security.Permissions;
+using System.IO;
 
 namespace PlayHouseConnector
 {
-    //public interface Payload 
-    //{
-    //    byte[] GetData();
-    //}
-
-    //public class ProtoPayload : Payload
-    //{
-    //    public ProtoPayload() { }
-
-    //    public byte[] GetData()
-    //    {
-    //        throw new NotImplementedException();
-    //    }
-    //}
-
-    //public class ReplyCallback
-    //{
-    //    Action<ReplyPacket> _action;
-    //    public ReplyCallback(Action<ReplyPacket> action)
-    //    {
-    //        this._action = action;
-    //    }   
-
-    //    public void SetResult(ReplyPacket packet)
-    //    {
-    //        _action.Invoke(packet);
-    //    }
-    //}
-
-
-    public class Packet : IDisposable
+    public interface IBasePacket : IDisposable
     {
+    }
 
-        public  String MsgName { get; private set; }
-        private PBuffer? _buffer;
+    public class Packet : IBasePacket
+    {
+        public short MsgId;
+        public IPayload Payload;
 
-
-        public Packet(String msgName, PBuffer? buffer)
+        public Packet(short msgId = 0)
         {
-            MsgName = msgName;
-            _buffer= buffer;
+            this.MsgId = msgId;
+            this.Payload = new EmptyPayload();
         }
 
-        public Packet(IMessage message)  
+        public Packet(short msgId, IPayload payload) : this(msgId)
         {
-            MsgName = message.Descriptor.Name;
-            _buffer = new PBuffer(message.CalculateSize());
-            message.WriteTo(_buffer.Data);
-            
+            Payload = payload;
         }
 
-        public byte[] GetData()
-        {
-            return _buffer!.Data;
-        }
+        public Packet(IMessage message) : this((short)message.Descriptor.Index, new ProtoPayload(message)) { }
+
 
         public void Dispose()
         {
-            if(_buffer!= null)
-            {
-                _buffer.Dispose();
-                _buffer = null;
-            }
-            
-        }
-
-        internal PBuffer MoveBuffer()
-        {
-            var temp = _buffer;
-            _buffer = null;
-            return temp!;
+            Payload.Dispose();
         }
     }
 
-    public class ReplyPacket : Packet 
+    public interface IReplyPacket : IBasePacket
     {
-        public int ErrorCode = 0;
-        public ReplyPacket(int errorCode,String msgName, PBuffer? buffer):base(msgName, buffer)
-        {
-            this.ErrorCode = errorCode;
-        }
+        public short ErrorCode { get; }
+        public short MsgId { get;}
+        public bool IsSuccess();
+
+        //public Stream GetStream();
+
+        public (byte[], int) Data { get; }
+
     }
+
+   
+
 
 
 }
