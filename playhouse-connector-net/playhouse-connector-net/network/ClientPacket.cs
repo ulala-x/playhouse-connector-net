@@ -59,7 +59,7 @@ namespace PlayHouseConnector.network
             return _buffer;
         }
 
-        public ReadOnlySpan<byte> Data => (_buffer.Data);
+        public ReadOnlySpan<byte> Data => new ReadOnlySpan<byte>(_buffer.Data,0,_buffer.Size);
     }
 
     public class ReplyPacket : IReplyPacket
@@ -148,7 +148,6 @@ namespace PlayHouseConnector.network
 
         internal void GetBytes(RingBuffer buffer)
         {
-            int bodyIndex = buffer.WriteInt16(0);
             var body = Payload.Data;
             int bodySize = body.Length;
 
@@ -157,7 +156,7 @@ namespace PlayHouseConnector.network
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder((short)body.Length));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder((short)bodySize));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
