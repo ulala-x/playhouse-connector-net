@@ -6,8 +6,7 @@ namespace playhouse_connector_net
 {
     public interface IPayload : IDisposable
     {   
-        void Output(Stream outputStream);
-        (byte[], int) Data { get; }
+        ReadOnlySpan<byte> Data { get; }
     }
 
     public class ProtoPayload : IPayload
@@ -20,16 +19,12 @@ namespace playhouse_connector_net
         }
 
      
-        public void Output(Stream outputStream)
-        {
-            _proto.WriteTo(outputStream);
-        }
-
+        
         public void Dispose()
         {
         }
 
-        public (byte[], int) Data => (_proto.ToByteArray(), _proto.CalculateSize());
+        public ReadOnlySpan<byte> Data => (_proto.ToByteArray());
         
     }
 
@@ -47,7 +42,7 @@ namespace playhouse_connector_net
         {
         }
 
-        public (byte[], int) Data => (new byte[0],0);
+        public ReadOnlySpan<byte> Data => new ReadOnlySpan<byte>();
     }
 
   

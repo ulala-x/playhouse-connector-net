@@ -49,11 +49,6 @@ namespace PlayHouseConnector.network
         }
 
 
-        public void Output(Stream outputStream)
-        {
-            outputStream.Write(_buffer.Data, 0, _buffer.Data.Length);
-        }
-
         public void Dispose()
         {
             _buffer.Dispose();
@@ -64,7 +59,7 @@ namespace PlayHouseConnector.network
             return _buffer;
         }
 
-        public (byte[], int) Data => (_buffer.Data, _buffer.Size);
+        public ReadOnlySpan<byte> Data => (_buffer.Data);
     }
 
     public class ReplyPacket : IReplyPacket
@@ -94,7 +89,7 @@ namespace PlayHouseConnector.network
             _payload.Dispose();
         }
 
-        public (byte[],int) Data =>_payload.Data;
+        public ReadOnlySpan<byte> Data =>_payload.Data;
 
     }
 
@@ -153,24 +148,21 @@ namespace PlayHouseConnector.network
 
         internal void GetBytes(RingBuffer buffer)
         {
-            int offset = (int)buffer.Count;
-
             int bodyIndex = buffer.WriteInt16(0);
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
-            
-            RingBufferStream stream = new RingBufferStream(buffer);
-            Payload.Output(stream);
-
-            int bodySize = buffer.Count - (offset + 8);
+            var body = Payload.Data;
+            int bodySize = body.Length;
 
             if (bodySize > PacketParser.MAX_PACKET_SIZE)
             {
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            buffer.ReplaceInt16(bodyIndex, XBitConverter.ToNetworkOrder((short)bodySize));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder((short)body.Length));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
+
+            buffer.Write(Payload.Data);
         }
 
         internal void SetMsgSeq(short seq)

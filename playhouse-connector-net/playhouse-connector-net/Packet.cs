@@ -42,7 +42,7 @@ namespace PlayHouseConnector
 
         //public Stream GetStream();
 
-        public (byte[], int) Data { get; }
+        public ReadOnlySpan<byte> Data { get; }
 
     }
 
