@@ -13,14 +13,16 @@ namespace PlayHouseConnector.network
         public short MsgId { get; set; }
         public short MsgSeq { get; set; }
         public short ErrorCode { get; set; }
+        public byte StageIndex { get; set; }
 
 
-        public Header(short serviceId = -1, short msgId =-1, short msgSeq = 0,short errorCode= 0)
+        public Header(short serviceId = 0, short msgId =0, short msgSeq = 0,short errorCode= 0, byte stageIndex = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
             MsgSeq = msgSeq;
             ServiceId = serviceId;
+            StageIndex = stageIndex;
         }
 
         //public static Header Of(HeaderMsg headerMsg)
@@ -141,9 +143,11 @@ namespace PlayHouseConnector.network
             return new Packet(Header.MsgId, MovePayload());
         }
 
-        internal static ClientPacket ToServerOf(short serviceId, Packet packet)
+        internal static ClientPacket ToServerOf(TargetId targetId, Packet packet)
         {
-            return new ClientPacket(new Header(serviceId, packet.MsgId), packet.Payload);
+            var header = new Header(serviceId: targetId.ServiceId, msgId: packet.MsgId, stageIndex: (byte)targetId.StageIndex);
+            return new ClientPacket(header, packet.Payload);
+                                                            
         }
 
         internal void GetBytes(RingBuffer buffer)
@@ -160,6 +164,7 @@ namespace PlayHouseConnector.network
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
+            buffer.Write(Header.StageIndex);
 
             buffer.Write(Payload.Data);
         }

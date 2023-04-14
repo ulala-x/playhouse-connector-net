@@ -9,6 +9,8 @@ namespace PlayHouseConnector
     {
     }
 
+ 
+
     public class Packet : IBasePacket
     {
         public short MsgId;
@@ -26,6 +28,8 @@ namespace PlayHouseConnector
         }
 
         public Packet(IMessage message) : this((short)message.Descriptor.Index, new ProtoPayload(message)) { }
+
+        
 
 
         public void Dispose()

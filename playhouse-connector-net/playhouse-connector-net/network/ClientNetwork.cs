@@ -28,11 +28,11 @@ namespace PlayHouseConnector.network
             return _client.IsClientConnected();
         }
 
-        internal void Send(short serviceId, ClientPacket packet)
+        internal void Send(ClientPacket packet)
         {
             using(packet)
             {
-                _client.Send(serviceId, packet);
+                _client.Send(packet);
             }
             
         }

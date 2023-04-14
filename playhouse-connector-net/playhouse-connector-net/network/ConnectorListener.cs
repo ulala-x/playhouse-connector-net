@@ -72,7 +72,7 @@ namespace playhouse_connector_net.network
                 }
                 else
                 {
-                    _connector.CallReceive(clientPacket.ServiceId(), clientPacket.ToPacket());
+                    _connector.CallReceive(new TargetId(clientPacket.ServiceId(),clientPacket.Header.StageIndex), clientPacket.ToPacket());
                 }
                 
             });

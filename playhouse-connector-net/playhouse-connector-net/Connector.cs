@@ -7,7 +7,21 @@ using CommonLib;
 
 namespace PlayHouseConnector
 {
+    public class TargetId
+    {
+        public short ServiceId { get; }
+        public int StageIndex { get; }
 
+        public TargetId(short serviceId, int stageIndex = 0)
+        {
+            if (stageIndex > byte.MaxValue)
+            {
+                throw new ArithmeticException("stageIndex overflow");
+            }
+            ServiceId = serviceId;
+            StageIndex = stageIndex;
+        }
+    }
     public class Connector
     {
         private ClientNetwork? _clientNetwork;        
@@ -17,7 +31,7 @@ namespace PlayHouseConnector
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;
-        public event Action<short, Packet>? OnReceive;
+        public event Action<TargetId, Packet>? OnReceive;
         public event Action? OnDiconnect;
 
         
@@ -59,29 +73,29 @@ namespace PlayHouseConnector
         {
             return _clientNetwork!.IsConnect();
         }
-        public void Send(short serviceId,Packet packet) 
+        public void Send(TargetId targetId,Packet packet) 
         {
-            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
-            _clientNetwork!.Send(serviceId, clientPacket);
+            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
+            _clientNetwork!.Send(clientPacket);
         }
-        public void Request(short serviceId,Packet packet,Action<IReplyPacket> callback) 
+        public void Request(TargetId targetId, Packet packet,Action<IReplyPacket> callback) 
         { 
             short seq = (short)_requestCache.GetSequence();
             _requestCache.Put(seq,new ReplyObject(callback));
-            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
+            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
             clientPacket.SetMsgSeq(seq);
-            _clientNetwork!.Send(serviceId, clientPacket);
+            _clientNetwork!.Send(clientPacket);
             
         }
 
-        public async Task<IReplyPacket> Request(short serviceId, Packet packet)
+        public async Task<IReplyPacket> Request(TargetId targetId, Packet packet)
         {
             short seq = (short)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<ReplyPacket>();
             _requestCache.Put(seq, new ReplyObject(null,deferred));
-            var clientPacket = ClientPacket.ToServerOf(serviceId, packet);
+            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
             clientPacket.SetMsgSeq(seq);
-            _clientNetwork!.Send(serviceId, clientPacket);
+            _clientNetwork!.Send(clientPacket);
             
             return await deferred.Task;
         }
@@ -96,9 +110,9 @@ namespace PlayHouseConnector
             OnConnect?.Invoke();
         }
 
-        internal void CallReceive(short serviceId, Packet packet)
+        internal void CallReceive(TargetId targetId, Packet packet)
         {
-            OnReceive?.Invoke(serviceId, packet);
+            OnReceive?.Invoke(targetId, packet);
         }
 
         internal void CallDisconnected()

@@ -12,7 +12,7 @@ namespace PlayHouseConnector.network
         void ClientConnect();
         void ClientDisconnect();
         bool IsClientConnected();
-        void Send(short serviceId, ClientPacket packet);
+        void Send(ClientPacket packet);
         bool IsStoped();
     }
 }

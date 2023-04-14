@@ -89,7 +89,7 @@ namespace PlayHouseConnector.network
             return base.IsConnected;
         }
 
-        public void Send(short serviceId, ClientPacket clientPacket)
+        public void Send(ClientPacket clientPacket)
         {
             using (clientPacket)
             {
