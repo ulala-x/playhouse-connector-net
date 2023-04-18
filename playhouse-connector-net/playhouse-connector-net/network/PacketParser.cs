@@ -40,7 +40,7 @@ namespace PlayHouseConnector.network
                     buffer.Clear(2);
 
                     short serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    short msgId = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    int msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
                     short msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     short errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     byte stageIndex = buffer.ReadByte();

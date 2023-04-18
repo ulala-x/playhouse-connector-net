@@ -10,13 +10,13 @@ namespace PlayHouseConnector.network
     public class Header
     {
         public short ServiceId { get; set; }
-        public short MsgId { get; set; }
+        public int MsgId { get; set; }
         public short MsgSeq { get; set; }
         public short ErrorCode { get; set; }
         public byte StageIndex { get; set; }
 
 
-        public Header(short serviceId = 0, short msgId =0, short msgSeq = 0,short errorCode= 0, byte stageIndex = 0)
+        public Header(short serviceId = 0, int msgId =0, short msgSeq = 0,short errorCode= 0, byte stageIndex = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
@@ -67,19 +67,19 @@ namespace PlayHouseConnector.network
     public class ReplyPacket : IReplyPacket
     {
         public short ErrorCode { get; private set; }
-        public short MsgId { get; private set; }
+        public int MsgId { get; private set; }
 
 
         private IPayload _payload;
 
-        public ReplyPacket(short errorCode, short msgId, IPayload payload)
+        public ReplyPacket(short errorCode, int msgId, IPayload payload)
         {
             this.ErrorCode = errorCode;
             this.MsgId = msgId;
             this._payload = payload;
         }
 
-        public ReplyPacket(short errorCode = 0, short msgId = -1) : this(errorCode, msgId, new EmptyPayload()) { }
+        public ReplyPacket(short errorCode = 0, int msgId = 0) : this(errorCode, msgId, new EmptyPayload()) { }
 
         public bool IsSuccess()
         {
@@ -127,7 +127,7 @@ namespace PlayHouseConnector.network
             return Header.MsgSeq;
         }
 
-        public short GetMsgId()
+        public int GetMsgId()
         {
             return Header.MsgId;
         }
@@ -162,7 +162,7 @@ namespace PlayHouseConnector.network
 
             buffer.WriteInt16(XBitConverter.ToNetworkOrder((short)bodySize));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgId));
+            buffer.WriteInt32(XBitConverter.ToNetworkOrder(Header.MsgId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
             buffer.Write(Header.StageIndex);
 
@@ -176,7 +176,7 @@ namespace PlayHouseConnector.network
 
         internal static ReplyPacket OfErrorPacket(short errorCode)
         {
-            return new ReplyPacket(errorCode, -1, new EmptyPayload());
+            return new ReplyPacket(errorCode, 0, new EmptyPayload());
 
         }
 

@@ -13,21 +13,21 @@ namespace PlayHouseConnector
 
     public class Packet : IBasePacket
     {
-        public short MsgId;
+        public int MsgId;
         public IPayload Payload;
 
-        public Packet(short msgId = 0)
+        public Packet(int msgId = 0)
         {
             this.MsgId = msgId;
             this.Payload = new EmptyPayload();
         }
 
-        public Packet(short msgId, IPayload payload) : this(msgId)
+        public Packet(int msgId, IPayload payload) : this(msgId)
         {
             Payload = payload;
         }
 
-        public Packet(IMessage message) : this((short)message.Descriptor.Index, new ProtoPayload(message)) { }
+        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message)) { }
 
         
 
@@ -41,7 +41,7 @@ namespace PlayHouseConnector
     public interface IReplyPacket : IBasePacket
     {
         public short ErrorCode { get; }
-        public short MsgId { get;}
+        public int MsgId { get;}
         public bool IsSuccess();
 
         //public Stream GetStream();

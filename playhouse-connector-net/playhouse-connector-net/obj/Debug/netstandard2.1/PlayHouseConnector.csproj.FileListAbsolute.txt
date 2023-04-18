@@ -1,7 +1,9 @@
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\PlayHouseConnector.deps.json
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\PlayHouseConnector.dll
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\PlayHouseConnector.pdb
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\CommonLib.dll
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\NetCoreServer.dll
+D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\CommonLib.pdb
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\NetCoreServer.pdb
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.csproj.AssemblyReference.cache
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.GeneratedMSBuildEditorConfig.editorconfig
@@ -11,5 +13,3 @@ D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connect
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.csproj.CopyComplete
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.dll
 D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.pdb
-D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\CommonLib.dll
-D:\work\ulalax\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\bin\Debug\netstandard2.1\CommonLib.pdb
