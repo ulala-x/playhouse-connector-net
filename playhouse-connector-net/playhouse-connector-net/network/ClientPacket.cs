@@ -7,6 +7,21 @@ using System.IO;
 
 namespace PlayHouseConnector.network
 {
+    public class TargetId
+    {
+        public short ServiceId { get; }
+        public int StageIndex { get; }
+
+        public TargetId(short serviceId, int stageIndex = 0)
+        {
+            if (stageIndex > byte.MaxValue)
+            {
+                throw new ArithmeticException("stageIndex overflow");
+            }
+            ServiceId = serviceId;
+            StageIndex = stageIndex;
+        }
+    }
     public class Header
     {
         public short ServiceId { get; set; }

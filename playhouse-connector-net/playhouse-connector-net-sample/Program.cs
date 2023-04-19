@@ -1,7 +1,6 @@
 ﻿using Playhouse.Sample;
 using playhouse_connector_net;
 using PlayHouseConnector;
-using PlayHouse;
 
 namespace playhouse_connector_net_sample
 {
@@ -40,9 +39,9 @@ namespace playhouse_connector_net_sample
                 Console.WriteLine($"OnConnected {retryCnt}");
             };
 
-            connector.OnReceive += (TargetId targetId, Packet packet) =>
+            connector.OnApiReceive += (short serviceId, Packet packet) =>
             {
-                Console.WriteLine($"OnReceive {targetId.ServiceId},{packet.MsgId}");
+                Console.WriteLine($"OnReceive {serviceId},{packet.MsgId}");
             };
 
             //connector.OnApiReceive()
@@ -51,7 +50,7 @@ namespace playhouse_connector_net_sample
 
 
 
-            connector.Request(new TargetId(serviceId), new Packet(authenticateReq), (IReplyPacket replyPacket) =>
+            connector.RequestToApi(serviceId, new Packet(authenticateReq), (IReplyPacket replyPacket) =>
             {
                 using (replyPacket)
                 {

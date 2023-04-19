@@ -7,21 +7,7 @@ using CommonLib;
 
 namespace PlayHouseConnector
 {
-    public class TargetId
-    {
-        public short ServiceId { get; }
-        public int StageIndex { get; }
-
-        public TargetId(short serviceId, int stageIndex = 0)
-        {
-            if (stageIndex > byte.MaxValue)
-            {
-                throw new ArithmeticException("stageIndex overflow");
-            }
-            ServiceId = serviceId;
-            StageIndex = stageIndex;
-        }
-    }
+  
     public class Connector
     {
         private ClientNetwork? _clientNetwork;        
@@ -31,7 +17,8 @@ namespace PlayHouseConnector
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;
-        public event Action<TargetId, Packet>? OnReceive;
+        public event Action<short, Packet>? OnApiReceive;
+        public event Action<short,int, Packet>? OnStageReceive;
         public event Action? OnDiconnect;
 
         
@@ -73,27 +60,41 @@ namespace PlayHouseConnector
         {
             return _clientNetwork!.IsConnect();
         }
-        public void Send(TargetId targetId,Packet packet) 
+
+        public void SendToApi(short serviceId,Packet packet)
         {
-            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
+            SendToStage(serviceId,0,packet);
+        }
+        public void RequestToApi(short serviceId,  Packet packet, Action<IReplyPacket> callback)
+        {
+            RequestToStage(serviceId,0,packet,callback);
+        }
+
+        public async Task<IReplyPacket> RequestToApi(short serviceId, Packet packet)
+        {
+            return await RequestToStage(serviceId,0,packet);
+        }
+        public void SendToStage(short serviceId,int stageindex,Packet packet) 
+        {
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageindex), packet);
             _clientNetwork!.Send(clientPacket);
         }
-        public void Request(TargetId targetId, Packet packet,Action<IReplyPacket> callback) 
+        public void RequestToStage(short serviceId, int stageindex, Packet packet,Action<IReplyPacket> callback) 
         { 
             short seq = (short)_requestCache.GetSequence();
             _requestCache.Put(seq,new ReplyObject(callback));
-            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
             clientPacket.SetMsgSeq(seq);
             _clientNetwork!.Send(clientPacket);
             
         }
 
-        public async Task<IReplyPacket> Request(TargetId targetId, Packet packet)
+        public async Task<IReplyPacket> RequestToStage(short serviceId, int stageindex, Packet packet)
         {
             short seq = (short)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<ReplyPacket>();
             _requestCache.Put(seq, new ReplyObject(null,deferred));
-            var clientPacket = ClientPacket.ToServerOf(targetId, packet);
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
             clientPacket.SetMsgSeq(seq);
             _clientNetwork!.Send(clientPacket);
             
@@ -112,7 +113,15 @@ namespace PlayHouseConnector
 
         internal void CallReceive(TargetId targetId, Packet packet)
         {
-            OnReceive?.Invoke(targetId, packet);
+            if(targetId.StageIndex == 0)
+            {
+                OnApiReceive?.Invoke(targetId.ServiceId, packet);
+            }
+            else
+            {
+                OnStageReceive?.Invoke(targetId.ServiceId,targetId.StageIndex, packet);
+            }
+            
         }
 
         internal void CallDisconnected()
