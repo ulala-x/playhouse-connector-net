@@ -40,14 +40,18 @@ namespace playhouse_connector_net_sample
                 Console.WriteLine($"OnConnected {retryCnt}");
             };
 
-            connector.OnReceive += (short serviceId, Packet packet) =>
+            connector.OnReceive += (TargetId targetId, Packet packet) =>
             {
-                Console.WriteLine($"OnReceive {serviceId},{packet.MsgId}");
+                Console.WriteLine($"OnReceive {targetId.ServiceId},{packet.MsgId}");
             };
 
+            //connector.OnApiReceive()
+            //connector.OnStageReceive(short serviceId,int stageIndex,Packet packet)
 
 
-            connector.Request(serviceId, new Packet(authenticateReq), (IReplyPacket replyPacket) =>
+
+
+            connector.Request(new TargetId(serviceId), new Packet(authenticateReq), (IReplyPacket replyPacket) =>
             {
                 using (replyPacket)
                 {

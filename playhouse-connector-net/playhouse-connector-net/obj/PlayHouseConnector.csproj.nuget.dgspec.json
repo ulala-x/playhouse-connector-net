@@ -117,10 +117,6 @@
         "netstandard2.1": {
           "targetAlias": "netstandard2.1",
           "dependencies": {
-            "Google.Protobuf": {
-              "target": "Package",
-              "version": "[3.22.1, )"
-            },
             "System.ServiceModel.Primitives": {
               "target": "Package",
               "version": "[4.10.2, )"
