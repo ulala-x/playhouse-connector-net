@@ -1,4 +1,5 @@
-﻿using playhouse_connector_net.network;
+﻿using PlayHouse.Utils;
+using playhouse_connector_net.network;
 using System;
 using System.Runtime.Caching;
 using System.Threading;
@@ -38,7 +39,7 @@ namespace PlayHouseConnector.network
     }
     public class RequestCache
     {
-        private int _atomicInt;
+        private AtomicShort _sequece = new AtomicShort();
         private CacheItemPolicy _policy;
 
         public RequestCache(int timeout) 
@@ -64,7 +65,7 @@ namespace PlayHouseConnector.network
 
         public int GetSequence()
         {
-            return Interlocked.Increment(ref _atomicInt);
+            return _sequece.IncrementAndGet();
         }
 
         public void Put(int seq,ReplyObject replyObject)
