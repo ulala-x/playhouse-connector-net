@@ -39,21 +39,6 @@ namespace PlayHouseConnector.network
             ServiceId = serviceId;
             StageIndex = stageIndex;
         }
-
-        //public static Header Of(HeaderMsg headerMsg)
-        //{
-        //    return new Header(headerMsg.ServiceId, headerMsg.MsgName, headerMsg.MsgSeq, headerMsg.ErrorCode);
-        //}
-
-        //public HeaderMsg ToMsg()
-        //{
-        //    var headerMsg = new HeaderMsg();
-        //    headerMsg.MsgName = MsgName;
-        //    headerMsg.MsgSeq = MsgSeq;                
-        //    headerMsg.ErrorCode = ErrorCode;
-        //    return headerMsg;
-
-        //}
     }
 
     public class PooledBufferPayload : IPayload
@@ -84,7 +69,6 @@ namespace PlayHouseConnector.network
         public short ErrorCode { get; private set; }
         public int MsgId { get; private set; }
 
-
         private IPayload _payload;
 
         public ReplyPacket(short errorCode, int msgId, IPayload payload)
@@ -105,7 +89,6 @@ namespace PlayHouseConnector.network
         {
             _payload.Dispose();
         }
-
         public ReadOnlySpan<byte> Data =>_payload.Data;
 
     }
@@ -137,21 +120,9 @@ namespace PlayHouseConnector.network
             return temp;
         }
 
-        public int GetMsgSeq()
-        {
-            return Header.MsgSeq;
-        }
-
-        public int GetMsgId()
-        {
-            return Header.MsgId;
-        }
-
-
-        public short ServiceId()
-        {
-            return Header.ServiceId;
-        }
+        public int MsgSeq => Header.MsgSeq;
+        public int MsgId=> Header.MsgId;
+        public short ServiceId => Header.ServiceId;
 
         public Packet ToPacket()
         {

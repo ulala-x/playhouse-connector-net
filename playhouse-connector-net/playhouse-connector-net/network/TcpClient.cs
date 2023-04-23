@@ -9,12 +9,7 @@ namespace PlayHouseConnector.network
 {
     class TcpClient : NetCoreServer.TcpClient, IClient
     {
-
         private IConnectorListener _connectorListener;
-
-        //private PreAllocByteArrayOutputStream _outputStream = new PreAllocByteArrayOutputStream(new byte[PacketParser.MAX_PACKET_SIZE]);
-        //private MemoryStream _outputStream  = new MemoryStream(new byte[PacketParser.MAX_PACKET_SIZE]);
-        
         private PacketParser _packetParser = new PacketParser();
         private RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
         private static RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
@@ -28,7 +23,6 @@ namespace PlayHouseConnector.network
             while (base.IsConnected)
                 Thread.Yield();
         }
-
 
         public TcpClient(string host, int port,Connector connector, RequestCache requestCache) : base(host, port)
         {
@@ -50,8 +44,6 @@ namespace PlayHouseConnector.network
 
             Console.WriteLine($"Chat TCP client disconnected a session with Id {Id}");
             _connectorListener.OnDisconnected();
-
-            
         }
 
         protected override void OnReceived(byte[] buffer, long offset, long size)
@@ -98,14 +90,6 @@ namespace PlayHouseConnector.network
                 base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
             }
         }
-
-        //public void SendAsync(string serviceId, ClientPacket clientPacket)
-        //{
-        //    _outputStream.Reset();
-        //    clientPacket.GetBytes(_outputStream);
-        //    base.SendAsync(_outputStream.GetBuffer(), 0, _outputStream.WrittenDataLength());
-        //}
-
         public bool IsStoped()
         {
             return _stop;

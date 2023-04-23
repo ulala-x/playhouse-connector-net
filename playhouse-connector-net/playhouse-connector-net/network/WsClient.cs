@@ -111,7 +111,5 @@ namespace PlayHouseConnector.network
         {
             return _stop;
         }
-
-   
     }
 }

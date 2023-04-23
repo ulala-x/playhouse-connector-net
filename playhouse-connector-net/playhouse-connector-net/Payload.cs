@@ -8,7 +8,6 @@ namespace playhouse_connector_net
     {   
         ReadOnlySpan<byte> Data { get; }
     }
-
     public class ProtoPayload : IPayload
     {
         private readonly IMessage _proto;
@@ -17,31 +16,21 @@ namespace playhouse_connector_net
         {
             _proto = proto;
         }
-
-     
-        
         public void Dispose()
         {
         }
 
         public ReadOnlySpan<byte> Data => (_proto.ToByteArray());
-        
     }
-
-
-
 
     public class EmptyPayload : IPayload
     {
-        
         public void Output(Stream outputStream)
         {
         }
-
         public void Dispose()
         {
         }
-
         public ReadOnlySpan<byte> Data => new ReadOnlySpan<byte>();
     }
 

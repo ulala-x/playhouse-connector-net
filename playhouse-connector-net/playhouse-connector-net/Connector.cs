@@ -7,13 +7,11 @@ using CommonLib;
 
 namespace PlayHouseConnector
 {
-  
     public class Connector
     {
         private ClientNetwork? _clientNetwork;        
         private RequestCache _requestCache;
         internal ConnectorConfig _connectorConfig;
-
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;

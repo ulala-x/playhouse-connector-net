@@ -81,7 +81,7 @@ namespace PlayHouseConnector.network
 
         public void OnReply(ClientPacket clientPacket)
         {
-            int msgSeq = clientPacket.GetMsgSeq();
+            int msgSeq = clientPacket.MsgSeq;
             string key = msgSeq.ToString();
             ReplyObject replyObject = (ReplyObject)MemoryCache.Default.Get(key);
 
@@ -91,7 +91,7 @@ namespace PlayHouseConnector.network
             }
             else
             {
-                LOG.Error($"{msgSeq},${clientPacket.GetMsgId()} request is not exist",GetType());
+                LOG.Error($"{msgSeq},${clientPacket.MsgId} request is not exist",GetType());
             }
         }
     }

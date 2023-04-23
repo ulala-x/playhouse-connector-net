@@ -9,8 +9,6 @@ namespace PlayHouseConnector
     {
     }
 
- 
-
     public class Packet : IBasePacket
     {
         public int MsgId;

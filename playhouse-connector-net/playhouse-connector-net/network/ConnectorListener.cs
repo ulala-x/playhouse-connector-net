@@ -66,13 +66,13 @@ namespace playhouse_connector_net.network
 
             AsyncManager.Instance.AddJob(() =>
             {
-                if (clientPacket.GetMsgSeq() > 0)
+                if (clientPacket.MsgSeq > 0)
                 {
                     _requestCache.OnReply(clientPacket);
                 }
                 else
                 {
-                    _connector.CallReceive(new TargetId(clientPacket.ServiceId(),clientPacket.Header.StageIndex), clientPacket.ToPacket());
+                    _connector.CallReceive(new TargetId(clientPacket.ServiceId,clientPacket.Header.StageIndex), clientPacket.ToPacket());
                 }
                 
             });
