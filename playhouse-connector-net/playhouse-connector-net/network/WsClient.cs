@@ -24,7 +24,11 @@ namespace PlayHouseConnector.network
         {
             _connectorListener = new ConnectorListener(connector, this, requestCache);
 
-            base.OptionNoDelay = true;
+            OptionNoDelay = true;
+            OptionKeepAlive = true;
+
+            OptionReceiveBufferSize = 64 * 1024;
+            OptionSendBufferSize = 64 * 1024;
 
             _queueStream = new RingBufferStream(_recvBuffer);
         }
@@ -92,6 +96,16 @@ namespace PlayHouseConnector.network
             base.Disconnect();
         }
 
+        public void ClientConnectAsync()
+        {
+            base.ConnectAsync();
+        }
+
+        public void ClientDisconnectAsync()
+        {
+            base.DisconnectAsync();
+        }
+
         public bool IsClientConnected()
         {
             return base.IsConnected;
@@ -110,6 +124,11 @@ namespace PlayHouseConnector.network
         public bool IsStoped()
         {
             return _stop;
+        }
+
+        public bool ClientReconnect()
+        {
+            return base.Reconnect();
         }
     }
 }

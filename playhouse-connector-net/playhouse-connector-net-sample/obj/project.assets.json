@@ -1451,7 +1451,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Ulala\\.nuget\\packages\\": {}
+    "C:\\Users\\hep7\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -1459,11 +1459,11 @@
       "projectUniqueName": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net-sample\\PlayHouseConnectorSample.csproj",
       "projectName": "PlayHouseConnectorSample",
       "projectPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net-sample\\PlayHouseConnectorSample.csproj",
-      "packagesPath": "C:\\Users\\Ulala\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\hep7\\.nuget\\packages\\",
       "outputPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net-sample\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Ulala\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\hep7\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

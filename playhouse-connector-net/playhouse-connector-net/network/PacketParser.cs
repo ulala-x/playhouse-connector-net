@@ -10,7 +10,7 @@ namespace PlayHouseConnector.network
     {
         
         public const int MAX_PACKET_SIZE = 65535;
-        public const int HEADER_SIZE = 11;
+        public const int HEADER_SIZE = 13;
         //public const int LENGTH_FIELD_SIZE = 3;
         
 
@@ -42,8 +42,9 @@ namespace PlayHouseConnector.network
                     short serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     int msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
                     short msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    short errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     byte stageIndex = buffer.ReadByte();
+                    short errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    
 
                     var body = new PooledBuffer(bodySize);
 

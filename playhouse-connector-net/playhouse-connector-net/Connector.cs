@@ -47,13 +47,20 @@ namespace PlayHouseConnector
                 _clientNetwork = new ClientNetwork(new TcpClient(host,port,this, _requestCache));                
             }
 
-            _clientNetwork.Connect();
+            _clientNetwork.ConnectAsync();
+        }
+
+      
+        public bool Reconnect()
+        {
+            return _clientNetwork!.Reconnect();
         }
 
         public void Disconnect() 
         {
-            _clientNetwork!.Disconnect();
+            _clientNetwork!.DisconnectAsync();
         }
+      
         public bool IsConnect() 
         {
             return _clientNetwork!.IsConnect();
@@ -126,5 +133,9 @@ namespace PlayHouseConnector
         {
             OnDiconnect?.Invoke();
         }
+
+
+
+
     }
 }

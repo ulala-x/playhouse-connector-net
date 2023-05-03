@@ -3,7 +3,7 @@
 namespace PlayHouseConnector
 
 {
-    public interface ILogger
+    public interface IPlayHouseLogger
     {
         void Debug(string message, string className);
         void Info(string message, string className);
@@ -23,7 +23,7 @@ namespace PlayHouseConnector
         Fatal = 5
     }
 
-    public class ConsoleLogger : ILogger
+    public class ConsoleLogger : IPlayHouseLogger
     {
         private string GetTimeStamp()
         {
@@ -70,10 +70,10 @@ namespace PlayHouseConnector
 
     public static class LOG
     {
-        private static ILogger _logger = new ConsoleLogger();
+        private static IPlayHouseLogger _logger = new ConsoleLogger();
         private static LogLevel _logLevel = LogLevel.Trace;
 
-        public static void SetLogger(ILogger logger, LogLevel logLevel = LogLevel.Trace)
+        public static void SetLogger(IPlayHouseLogger logger, LogLevel logLevel = LogLevel.Trace)
         {
             _logger = logger;
             _logLevel = logLevel;

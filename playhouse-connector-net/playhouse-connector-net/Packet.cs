@@ -12,17 +12,21 @@ namespace PlayHouseConnector
     public class Packet : IBasePacket
     {
         public int MsgId;
-        public IPayload Payload;
+        public IPayload Payload => _payload;
+
+        private IPayload _payload;
+
+        public ReadOnlySpan<byte> Data => _payload!.Data;
 
         public Packet(int msgId = 0)
         {
             this.MsgId = msgId;
-            this.Payload = new EmptyPayload();
+            this._payload = new EmptyPayload();
         }
 
         public Packet(int msgId, IPayload payload) : this(msgId)
         {
-            Payload = payload;
+            _payload = payload;
         }
 
         public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message)) { }

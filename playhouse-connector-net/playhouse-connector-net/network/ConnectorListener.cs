@@ -50,7 +50,7 @@ namespace playhouse_connector_net.network
             {
                 _retryCnt++;
                 Thread.Sleep(reconnectCount * 1000);
-                _client.ClientConnect();
+                _client.ClientConnectAsync();
             }
             else
             {

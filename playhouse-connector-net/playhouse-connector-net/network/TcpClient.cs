@@ -28,12 +28,18 @@ namespace PlayHouseConnector.network
         {
             _connectorListener = new ConnectorListener(connector, this, requestCache);
             _stream = new RingBufferStream(_recvBuffer);
+
+            OptionNoDelay = true;
+            OptionKeepAlive = true;
+
+            OptionReceiveBufferSize = 64 * 1024;
+            OptionSendBufferSize = 64 * 1024;
         }
 
         protected override void OnConnected()
         {
             LOG.Info($"Connected id:{Id}",GetType());
-            Console.WriteLine($"Chat WebSocket client connected a new session with Id {Id}");
+            LOG.Info($"Tcp Socket client connected a new session with Id {Id}",GetType());
 
             _connectorListener.OnConnected();
             _stop = false;
@@ -42,7 +48,7 @@ namespace PlayHouseConnector.network
         protected override void OnDisconnected()
         {
 
-            Console.WriteLine($"Chat TCP client disconnected a session with Id {Id}");
+            LOG.Info($"TCP client disconnected a session with Id {Id}", GetType());
             _connectorListener.OnDisconnected();
         }
 
@@ -63,17 +69,27 @@ namespace PlayHouseConnector.network
                 Disconnect();
             }
 
-            Console.WriteLine(Encoding.UTF8.GetString(buffer, (int)offset, (int)size));
+            //Console.WriteLine(Encoding.UTF8.GetString(buffer, (int)offset, (int)size));
         }
 
-        public void ClientConnect()
+        public void ClientConnectAsync()
         {
             base.ConnectAsync();
         }
 
-        public void ClientDisconnect()
+        public void ClientDisconnectAsync()
         {
             base.DisconnectAsync();
+        }
+
+        public void ClientConnect()
+        {
+            base.Connect();
+        }
+
+        public void ClientDisconnect()
+        {
+            base.Disconnect();
         }
 
         public bool IsClientConnected()
@@ -95,5 +111,9 @@ namespace PlayHouseConnector.network
             return _stop;
         }
 
+        public bool ClientReconnect()
+        {
+            return base.ReconnectAsync();
+        }
     }
 }

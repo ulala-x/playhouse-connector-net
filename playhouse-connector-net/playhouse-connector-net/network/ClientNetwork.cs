@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 
 namespace PlayHouseConnector.network
 {
@@ -23,6 +24,17 @@ namespace PlayHouseConnector.network
             _client.ClientDisconnect();
         }
 
+        internal void ConnectAsync()
+        {
+
+            _client.ClientConnectAsync();
+        }
+
+        internal void DisconnectAsync()
+        {
+            _client.ClientDisconnectAsync();
+        }
+
         internal bool IsConnect()
         {
             return _client.IsClientConnected();
@@ -37,6 +49,9 @@ namespace PlayHouseConnector.network
             
         }
 
-       
+        internal bool Reconnect()
+        {
+            return  _client.ClientReconnect();
+        }
     }
 }
