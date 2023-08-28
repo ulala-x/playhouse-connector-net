@@ -1422,19 +1422,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\hep7\\.nuget\\packages\\": {}
+    "C:\\Users\\blackstorm_ulalax\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\PlayHouseConnector.csproj",
+      "projectUniqueName": "D:\\work\\ulala-x\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\PlayHouseConnector.csproj",
       "projectName": "PlayHouseConnector",
-      "projectPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\PlayHouseConnector.csproj",
-      "packagesPath": "C:\\Users\\hep7\\.nuget\\packages\\",
-      "outputPath": "D:\\work\\ulalax\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\obj\\",
+      "projectPath": "D:\\work\\ulala-x\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\PlayHouseConnector.csproj",
+      "packagesPath": "C:\\Users\\blackstorm_ulalax\\.nuget\\packages\\",
+      "outputPath": "D:\\work\\ulala-x\\playhouse-connector-net\\playhouse-connector-net\\playhouse-connector-net\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\hep7\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\blackstorm_ulalax\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -1448,8 +1448,8 @@
         "netstandard2.1": {
           "targetAlias": "netstandard2.1",
           "projectReferences": {
-            "D:\\work\\ulalax\\playhouse-net-common\\CommonLib\\CommonLib\\CommonLib.csproj": {
-              "projectPath": "D:\\work\\ulalax\\playhouse-net-common\\CommonLib\\CommonLib\\CommonLib.csproj"
+            "D:\\work\\ulala-x\\playhouse-net-common\\CommonLib\\CommonLib\\CommonLib.csproj": {
+              "projectPath": "D:\\work\\ulala-x\\playhouse-net-common\\CommonLib\\CommonLib\\CommonLib.csproj"
             }
           }
         }
@@ -1497,7 +1497,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.200\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.306\\RuntimeIdentifierGraph.json"
       }
     }
   }
