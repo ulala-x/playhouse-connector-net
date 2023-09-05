@@ -2,7 +2,6 @@
 using playhouse_connector_net.network;
 using System;
 using System.Runtime.Caching;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace PlayHouseConnector.network
@@ -26,7 +25,7 @@ namespace PlayHouseConnector.network
             });
         }
 
-        public void Throw(short errorCode)
+        public void Throw(ushort errorCode)
         {
             AsyncManager.Instance.AddJob(() =>
             {
@@ -41,6 +40,7 @@ namespace PlayHouseConnector.network
     {
         private AtomicShort _sequece = new AtomicShort();
         private CacheItemPolicy _policy;
+        private ushort requestTimeoutErrorCode = 60003;
 
         public RequestCache(int timeout) 
         {
@@ -55,7 +55,7 @@ namespace PlayHouseConnector.network
                 if (args.RemovedReason == CacheEntryRemovedReason.Expired)
                 {
                     var replyObject = (ReplyObject)args.CacheItem.Value;
-                    replyObject.OnReceive(ClientPacket.OfErrorPacket((int)BaseErrorCode.RequestTimeout));
+                    replyObject.OnReceive(ClientPacket.OfErrorPacket(requestTimeoutErrorCode));
                 }
             });
 

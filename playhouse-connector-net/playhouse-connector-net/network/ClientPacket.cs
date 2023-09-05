@@ -9,10 +9,10 @@ namespace PlayHouseConnector.network
 {
     public class TargetId
     {
-        public short ServiceId { get; }
+        public ushort ServiceId { get; }
         public int StageIndex { get; }
 
-        public TargetId(short serviceId, int stageIndex = 0)
+        public TargetId(ushort serviceId, int stageIndex = 0)
         {
             if (stageIndex > byte.MaxValue)
             {
@@ -24,14 +24,14 @@ namespace PlayHouseConnector.network
     }
     public class Header
     {
-        public short ServiceId { get; set; }
+        public ushort ServiceId { get; set; }
         public int MsgId { get; set; }
-        public short MsgSeq { get; set; }
-        public short ErrorCode { get; set; }
+        public ushort MsgSeq { get; set; }
+        public ushort ErrorCode { get; set; }
         public byte StageIndex { get; set; }
 
 
-        public Header(short serviceId = 0, int msgId =0, short msgSeq = 0,short errorCode= 0, byte stageIndex = 0)
+        public Header(ushort serviceId = 0, int msgId =0, ushort msgSeq = 0,ushort errorCode= 0, byte stageIndex = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
@@ -66,19 +66,19 @@ namespace PlayHouseConnector.network
 
     public class ReplyPacket : IReplyPacket
     {
-        public short ErrorCode { get; private set; }
+        public ushort ErrorCode { get; private set; }
         public int MsgId { get; private set; }
 
         private IPayload _payload;
 
-        public ReplyPacket(short errorCode, int msgId, IPayload payload)
+        public ReplyPacket(ushort errorCode, int msgId, IPayload payload)
         {
             this.ErrorCode = errorCode;
             this.MsgId = msgId;
             this._payload = payload;
         }
 
-        public ReplyPacket(short errorCode = 0, int msgId = 0) : this(errorCode, msgId, new EmptyPayload()) { }
+        public ReplyPacket(ushort errorCode = 0, int msgId = 0) : this(errorCode, msgId, new EmptyPayload()) { }
 
         public bool IsSuccess()
         {
@@ -122,7 +122,7 @@ namespace PlayHouseConnector.network
 
         public int MsgSeq => Header.MsgSeq;
         public int MsgId=> Header.MsgId;
-        public short ServiceId => Header.ServiceId;
+        public ushort ServiceId => Header.ServiceId;
 
         public Packet ToPacket()
         {
@@ -146,7 +146,7 @@ namespace PlayHouseConnector.network
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder((short)bodySize));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder((ushort)bodySize));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
             buffer.WriteInt32(XBitConverter.ToNetworkOrder(Header.MsgId));
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
@@ -155,12 +155,12 @@ namespace PlayHouseConnector.network
             buffer.Write(Payload.Data);
         }
 
-        internal void SetMsgSeq(short seq)
+        internal void SetMsgSeq(ushort seq)
         {
             Header.MsgSeq = seq;
         }
 
-        internal static ReplyPacket OfErrorPacket(short errorCode)
+        internal static ReplyPacket OfErrorPacket(ushort errorCode)
         {
             return new ReplyPacket(errorCode, 0, new EmptyPayload());
 

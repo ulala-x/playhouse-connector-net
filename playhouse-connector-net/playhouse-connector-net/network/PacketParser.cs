@@ -39,11 +39,11 @@ namespace PlayHouseConnector.network
 
                     buffer.Clear(2);
 
-                    short serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    ushort serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     int msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
-                    short msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    ushort msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     byte stageIndex = buffer.ReadByte();
-                    short errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    ushort errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     
 
                     var body = new PooledBuffer(bodySize);

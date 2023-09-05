@@ -42,7 +42,7 @@ namespace PlayHouseConnector
 
     public interface IReplyPacket : IBasePacket
     {
-        public short ErrorCode { get; }
+        public ushort ErrorCode { get; }
         public int MsgId { get;}
         public bool IsSuccess();
 

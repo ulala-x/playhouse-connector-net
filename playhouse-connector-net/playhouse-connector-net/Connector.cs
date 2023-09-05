@@ -15,8 +15,8 @@ namespace PlayHouseConnector
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;
-        public event Action<short, Packet>? OnApiReceive;
-        public event Action<short,int, Packet>? OnStageReceive;
+        public event Action<ushort, Packet>? OnApiReceive;
+        public event Action<ushort,int, Packet>? OnStageReceive;
         public event Action? OnDiconnect;
 
         
@@ -66,27 +66,27 @@ namespace PlayHouseConnector
             return _clientNetwork!.IsConnect();
         }
 
-        public void SendToApi(short serviceId,Packet packet)
+        public void SendToApi(ushort serviceId,Packet packet)
         {
             SendToStage(serviceId,0,packet);
         }
-        public void RequestToApi(short serviceId,  Packet packet, Action<IReplyPacket> callback)
+        public void RequestToApi(ushort serviceId,  Packet packet, Action<IReplyPacket> callback)
         {
             RequestToStage(serviceId,0,packet,callback);
         }
 
-        public async Task<IReplyPacket> RequestToApi(short serviceId, Packet packet)
+        public async Task<IReplyPacket> RequestToApi(ushort serviceId, Packet packet)
         {
             return await RequestToStage(serviceId,0,packet);
         }
-        public void SendToStage(short serviceId,int stageindex,Packet packet) 
+        public void SendToStage(ushort serviceId,int stageindex,Packet packet) 
         {
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageindex), packet);
             _clientNetwork!.Send(clientPacket);
         }
-        public void RequestToStage(short serviceId, int stageindex, Packet packet,Action<IReplyPacket> callback) 
+        public void RequestToStage(ushort serviceId, int stageindex, Packet packet,Action<IReplyPacket> callback) 
         { 
-            short seq = (short)_requestCache.GetSequence();
+            ushort seq = (ushort)_requestCache.GetSequence();
             _requestCache.Put(seq,new ReplyObject(callback));
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
             clientPacket.SetMsgSeq(seq);
@@ -94,9 +94,9 @@ namespace PlayHouseConnector
             
         }
 
-        public async Task<IReplyPacket> RequestToStage(short serviceId, int stageindex, Packet packet)
+        public async Task<IReplyPacket> RequestToStage(ushort serviceId, int stageindex, Packet packet)
         {
-            short seq = (short)_requestCache.GetSequence(); 
+            ushort seq = (ushort)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<ReplyPacket>();
             _requestCache.Put(seq, new ReplyObject(null,deferred));
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
