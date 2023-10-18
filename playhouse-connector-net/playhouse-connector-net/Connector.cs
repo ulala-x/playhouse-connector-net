@@ -15,8 +15,8 @@ namespace PlayHouseConnector
 
         public event Action? OnConnect;
         public event Action<int>? OnReconnect;
-        public event Action<ushort, Packet>? OnApiReceive;
-        public event Action<ushort,int, Packet>? OnStageReceive;
+        //public event Action<ushort, Packet>? OnApiReceive;
+        public event Action<ushort,int, Packet>? OnReceive;
         public event Action? OnDiconnect;
 
         
@@ -118,15 +118,16 @@ namespace PlayHouseConnector
 
         internal void CallReceive(TargetId targetId, Packet packet)
         {
-            if(targetId.StageIndex == 0)
-            {
-                OnApiReceive?.Invoke(targetId.ServiceId, packet);
-            }
-            else
-            {
-                OnStageReceive?.Invoke(targetId.ServiceId,targetId.StageIndex, packet);
-            }
-            
+            OnReceive(targetId.ServiceId, targetId.StageIndex, packet);
+            // if(targetId.ServiceId == 0)
+            // {
+            //     OnApiReceive?.Invoke(targetId.ServiceId, packet);
+            // }
+            // else
+            // {
+            //     OnStageReceive?.Invoke(targetId.ServiceId,targetId.StageIndex, packet);
+            // }
+
         }
 
         internal void CallDisconnected()

@@ -1,6 +1,7 @@
 ﻿using PlayHouse.Utils;
 using playhouse_connector_net.network;
 using System;
+using System.Collections.Specialized;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 
@@ -40,15 +41,25 @@ namespace PlayHouseConnector.network
     {
         private AtomicShort _sequece = new AtomicShort();
         private CacheItemPolicy _policy;
-        private ushort requestTimeoutErrorCode = 60003;
+        private const ushort requestTimeoutErrorCode = 60003;
+        private  MemoryCache _cache ;
 
         public RequestCache(int timeout) 
         {
-            _policy = new CacheItemPolicy() ;
-            if(timeout > 0) {
-                _policy.AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(timeout);
-            }
+            NameValueCollection cacheSettings = new ()
+            {
+                {"CacheMemoryLimitMegabytes", "10"},
+                {"PhysicalMemoryLimitPercentage", "10"},
+                {"PollingInterval", "00:00:01"}
+            };
+            _cache =  new("PlayHouseConnector", cacheSettings);
             
+            _policy = new CacheItemPolicy() ;
+            if (timeout > 0)
+            {
+                _policy.SlidingExpiration = TimeSpan.FromMilliseconds(timeout);
+            }
+
 
             // Set a callback to be called when the cache item is removed
             _policy.RemovedCallback = new CacheEntryRemovedCallback((args) => {
@@ -71,23 +82,23 @@ namespace PlayHouseConnector.network
         public void Put(int seq,ReplyObject replyObject)
         {
             var cacheItem = new CacheItem(seq.ToString(), replyObject);
-            MemoryCache.Default.Add(cacheItem, _policy);
+            _cache.Add(cacheItem, _policy);
         }
 
         public ReplyObject? Get(int seq)
         {
-            return (ReplyObject)MemoryCache.Default.Get(seq.ToString());
+            return (ReplyObject)_cache.Get(seq.ToString());
         }
 
         public void OnReply(ClientPacket clientPacket)
         {
             int msgSeq = clientPacket.MsgSeq;
             string key = msgSeq.ToString();
-            ReplyObject replyObject = (ReplyObject)MemoryCache.Default.Get(key);
+            ReplyObject? replyObject = _cache.Get(key) as ReplyObject ;
 
             if (replyObject != null) { 
                 replyObject.OnReceive(clientPacket.ToReplyPacket());
-                MemoryCache.Default.Remove(key);
+                _cache.Remove(key);
             }
             else
             {

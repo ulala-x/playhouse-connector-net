@@ -9,10 +9,10 @@ namespace PlayHouseConnector
      public class ConnectorConfig
     {
 
-            private const int DEFAULT_TIMEOUT = 15;
+            private const int DEFAULT_TIMEOUT = 5000;
 
             /// <summary>
-            /// TimeOut 기본 대기시간 설정(단위 : sec, 기본값 15).
+            /// TimeOut 기본 대기시간 설정(단위 : ms, 기본값 5).
             /// </summary>
             public int ReqestTimeout = DEFAULT_TIMEOUT;
 
@@ -32,14 +32,8 @@ namespace PlayHouseConnector
             /// </summary>
             public int ReconnectDelay = 3;
 
-            /// <summary>
-            /// 재접속시 연결 대기시간 (단위 : sec, 기본값 : 15).
-            /// </summary>
-            public int autoReconnectTimeout = DEFAULT_TIMEOUT;
 
             public bool UseWebsocket = false;
-
-            
 
         }
    
