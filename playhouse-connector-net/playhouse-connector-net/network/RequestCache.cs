@@ -50,15 +50,16 @@ namespace PlayHouseConnector.network
             {
                 {"CacheMemoryLimitMegabytes", "10"},
                 {"PhysicalMemoryLimitPercentage", "10"},
-                {"PollingInterval", "00:00:01"}
             };
-            _cache =  new("PlayHouseConnector", cacheSettings);
-            
-            _policy = new CacheItemPolicy() ;
+
             if (timeout > 0)
             {
-                _policy.SlidingExpiration = TimeSpan.FromMilliseconds(timeout);
+                cacheSettings.Add("PollingInterval", "00:00:01");
             }
+
+            _cache =  new("PlayHouseConnector", cacheSettings);
+            _policy = new CacheItemPolicy() ;
+            _policy.SlidingExpiration = TimeSpan.FromMilliseconds(timeout);
 
 
             // Set a callback to be called when the cache item is removed
