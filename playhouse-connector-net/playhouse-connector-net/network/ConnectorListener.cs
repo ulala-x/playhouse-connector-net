@@ -1,8 +1,5 @@
 ﻿using PlayHouseConnector;
 using PlayHouseConnector.network;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace playhouse_connector_net.network
@@ -14,17 +11,20 @@ namespace playhouse_connector_net.network
 
         private int _retryCnt = 0;
         private RequestCache _requestCache;
+        private AsyncManager _asyncManager;
         
-        public ConnectorListener(Connector connector,IClient client, RequestCache requestCache)
+        public ConnectorListener(Connector connector, IClient client, RequestCache requestCache,
+            AsyncManager asyncManager)
         {
            _connector = connector;
            _client = client;
             _requestCache = requestCache;
+            _asyncManager = asyncManager;
         }
 
         public void OnConnected()
         {
-            AsyncManager.Instance.AddJob(() =>
+            _asyncManager.AddJob(() =>
             {
                 if (_retryCnt > 0)
                 {
@@ -43,10 +43,10 @@ namespace playhouse_connector_net.network
   
         public void OnDisconnected()
         {
-            int reconnectCount = _connector._connectorConfig.ReconnectCount;
-            int reconnectDelay = _connector._connectorConfig.ReconnectDelay;
+            int reconnectCount = _connector.ConnectorConfig.ReconnectCount;
+            int reconnectDelay = _connector.ConnectorConfig.ReconnectDelay;
             
-            if (!_client.IsStoped() && _retryCnt < reconnectCount)
+            if (!_client.IsStopped() && _retryCnt < reconnectCount)
             {
                 _retryCnt++;
                 Thread.Sleep(reconnectCount * 1000);
@@ -54,7 +54,7 @@ namespace playhouse_connector_net.network
             }
             else
             {
-                AsyncManager.Instance.AddJob(() =>
+                _asyncManager.AddJob(() =>
                 {
                     _connector.CallDisconnected();
                 });
@@ -64,7 +64,7 @@ namespace playhouse_connector_net.network
         public void OnReceive(ClientPacket clientPacket)
         {
 
-            AsyncManager.Instance.AddJob(() =>
+            _asyncManager.AddJob(() =>
             {
                 if (clientPacket.MsgSeq > 0)
                 {

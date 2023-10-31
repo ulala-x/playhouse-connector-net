@@ -11,15 +11,23 @@ namespace PlayHouseConnector.network
     {
         private Action<ReplyPacket>? _replyCallback = null;
         private TaskCompletionSource<ReplyPacket>? _taskCompletionSource= null;
-        public ReplyObject(Action<ReplyPacket>? callback = null, TaskCompletionSource<ReplyPacket>? taskCompletionSource = null)  
-        { 
+        private AsyncManager _asyncManager;
+        public DateTime RegisterDate { get; set; } = DateTime.Now;
+        public int MsgSeq { get; set; }
+        public int MsgId { get; set; }
+        public ReplyObject(int msgSeq,int msgId,AsyncManager asyncManager,Action<ReplyPacket>? callback = null, 
+            TaskCompletionSource<ReplyPacket>? taskCompletionSource = null)
+        {
+            MsgSeq = msgSeq;
+            MsgId = msgId;
+            _asyncManager = asyncManager;
             _replyCallback = callback;
             _taskCompletionSource = taskCompletionSource;
         }
 
         public void OnReceive(ReplyPacket replayPacket)
         {
-            AsyncManager.Instance.AddJob(() =>
+            _asyncManager.AddJob(() =>
             {
                 _replyCallback?.Invoke(replayPacket);
                 _taskCompletionSource?.SetResult(replayPacket);
@@ -28,7 +36,7 @@ namespace PlayHouseConnector.network
 
         public void Throw(ushort errorCode)
         {
-            AsyncManager.Instance.AddJob(() =>
+            _asyncManager.AddJob(() =>
             {
                 _replyCallback?.Invoke(ClientPacket.OfErrorPacket(errorCode));
                 _taskCompletionSource?.SetResult(ClientPacket.OfErrorPacket(errorCode));
@@ -43,9 +51,11 @@ namespace PlayHouseConnector.network
         private CacheItemPolicy _policy;
         private const ushort requestTimeoutErrorCode = 60003;
         private  MemoryCache _cache ;
+        private AsyncManager _asyncManager;
 
-        public RequestCache(int timeout) 
+        public RequestCache(int timeout, AsyncManager asyncManager)
         {
+            _asyncManager = asyncManager;
             NameValueCollection cacheSettings = new ()
             {
                 {"CacheMemoryLimitMegabytes", "10"},
@@ -59,7 +69,7 @@ namespace PlayHouseConnector.network
 
             _cache =  new("PlayHouseConnector", cacheSettings);
             _policy = new CacheItemPolicy() ;
-            _policy.SlidingExpiration = TimeSpan.FromMilliseconds(timeout);
+            _policy.SlidingExpiration = TimeSpan.FromSeconds(timeout);
 
 
             // Set a callback to be called when the cache item is removed
@@ -67,6 +77,7 @@ namespace PlayHouseConnector.network
                 if (args.RemovedReason == CacheEntryRemovedReason.Expired)
                 {
                     var replyObject = (ReplyObject)args.CacheItem.Value;
+                    LOG.Error($"MsgSeq:{replyObject.MsgSeq}, MsgId:{replyObject.MsgId} message timeout {replyObject.RegisterDate}",GetType());
                     replyObject.OnReceive(ClientPacket.OfErrorPacket(requestTimeoutErrorCode));
                 }
             });
@@ -103,7 +114,7 @@ namespace PlayHouseConnector.network
             }
             else
             {
-                LOG.Error($"{msgSeq},${clientPacket.MsgId} request is not exist",GetType());
+                LOG.Error($"msgSeq:{msgSeq},MsgId{clientPacket.MsgId} request is not exist",GetType());
             }
         }
     }

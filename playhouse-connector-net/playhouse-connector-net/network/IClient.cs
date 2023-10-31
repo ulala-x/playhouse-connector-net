@@ -16,7 +16,7 @@ namespace PlayHouseConnector.network
         void ClientDisconnectAsync();
         bool IsClientConnected();
         void Send(ClientPacket packet);
-        bool IsStoped();
+        bool IsStopped();
         bool ClientReconnect();
     }
 }

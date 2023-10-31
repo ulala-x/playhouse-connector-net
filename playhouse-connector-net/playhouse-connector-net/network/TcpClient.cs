@@ -12,7 +12,7 @@ namespace PlayHouseConnector.network
         private IConnectorListener _connectorListener;
         private PacketParser _packetParser = new PacketParser();
         private RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
-        private static RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
+        private RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
         private RingBufferStream _stream;
         private bool _stop = false;
 
@@ -24,9 +24,10 @@ namespace PlayHouseConnector.network
                 Thread.Yield();
         }
 
-        public TcpClient(string host, int port,Connector connector, RequestCache requestCache) : base(host, port)
+        public TcpClient(string host, int port, Connector connector, RequestCache requestCache,
+            AsyncManager asyncManager) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this, requestCache);
+            _connectorListener = new ConnectorListener(connector, this, requestCache,asyncManager);
             _stream = new RingBufferStream(_recvBuffer);
 
             OptionNoDelay = true;
@@ -106,7 +107,7 @@ namespace PlayHouseConnector.network
                 base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
             }
         }
-        public bool IsStoped()
+        public bool IsStopped()
         {
             return _stop;
         }

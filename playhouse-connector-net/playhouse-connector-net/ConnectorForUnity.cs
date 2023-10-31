@@ -1,9 +1,5 @@
-﻿using playhouse_connector_net.network;
-using PlayHouseConnector;
-using System;
+﻿using PlayHouseConnector;
 using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 
 namespace playhouse_connector_net
 {
@@ -15,7 +11,7 @@ namespace playhouse_connector_net
 
         public new IEnumerator Start()
         {
-            return AsyncManager.Instance.MainThreadActionCoroutine();
+            return AsyncManager.MainThreadActionCoroutine();
         }
     }
 }

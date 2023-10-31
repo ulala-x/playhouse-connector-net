@@ -3,8 +3,6 @@ using CommonLib;
 using NetCoreServer;
 using playhouse_connector_net.network;
 using System;
-using System.Net.NetworkInformation;
-using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 
@@ -12,17 +10,18 @@ namespace PlayHouseConnector.network
 {
     class WsClient : NetCoreServer.WsClient, IClient
     {
-        private IConnectorListener _connectorListener;
-        private PacketParser _packetParser = new PacketParser();
-        private RingBuffer _recvBuffer = new RingBuffer(1024*1024);
-        private static RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
-        private RingBufferStream _queueStream ;
+        private readonly IConnectorListener _connectorListener;
+        private readonly PacketParser _packetParser = new();
+        private readonly RingBuffer _recvBuffer = new(1024*1024);
+        private readonly RingBuffer _sendBuffer = new(1024 * 1024);
+        private readonly RingBufferStream _queueStream ;
         private bool _stop;
 
 
-        public WsClient(string host, int port, Connector connector, RequestCache requestCache) : base(host, port)
+        public WsClient(string host, int port, Connector connector, RequestCache requestCache,
+            AsyncManager asyncManager) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this, requestCache);
+            _connectorListener = new ConnectorListener(connector, this, requestCache,asyncManager);
 
             OptionNoDelay = true;
             OptionKeepAlive = true;
@@ -121,7 +120,7 @@ namespace PlayHouseConnector.network
             }
         }
 
-        public bool IsStoped()
+        public bool IsStopped()
         {
             return _stop;
         }

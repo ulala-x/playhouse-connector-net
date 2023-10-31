@@ -8,22 +8,8 @@ namespace playhouse_connector_net.network
     public class AsyncManager
     {
 
-        private ConcurrentQueue<Action> _mainThreadActions  = new ConcurrentQueue<Action>();
-        private static AsyncManager? _instance = null;
-        private bool _isClose = false;
-        public static AsyncManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new AsyncManager();
-                return _instance;
-            }
-        }
-
-        public AsyncManager()
-        {
-        }
+        private readonly ConcurrentQueue<Action> _mainThreadActions  = new();
+        private bool _isClose;
 
         public void AddJob(Action action)
         {
