@@ -1,7 +1,6 @@
-﻿using PlayHouseConnector;
-using System.Collections;
+﻿using System.Collections;
 
-namespace playhouse_connector_net
+namespace PlayHouseConnector
 {
     public class ConnectorForUnity : Connector
     {
@@ -9,9 +8,9 @@ namespace playhouse_connector_net
         {
         }
 
-        public new IEnumerator Start()
+        public IEnumerator MainCoroutineAction()
         {
-            return AsyncManager.MainThreadActionCoroutine();
+            return AsyncManager.MainCoroutineAction();
         }
     }
 }

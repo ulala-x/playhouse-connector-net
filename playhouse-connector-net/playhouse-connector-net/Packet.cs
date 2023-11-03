@@ -1,5 +1,4 @@
 ﻿using Google.Protobuf;
-using playhouse_connector_net;
 using System;
 using System.IO;
 
@@ -9,13 +8,20 @@ namespace PlayHouseConnector
     {
     }
 
-    public class Packet : IBasePacket
+    public interface IPacket : IBasePacket
     {
-        public int MsgId;
+        public int MsgId { get; }
+        public IPayload Payload { get; }
+        public ReadOnlySpan<byte> Data { get; }
+    }
+
+    //
+    public class Packet : IPacket
+    {
         public IPayload Payload => _payload;
+        private readonly IPayload _payload;
 
-        private IPayload _payload;
-
+        public int MsgId { get; }
         public ReadOnlySpan<byte> Data => _payload!.Data;
 
         public Packet(int msgId = 0)
@@ -29,9 +35,9 @@ namespace PlayHouseConnector
             _payload = payload;
         }
 
-        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message)) { }
-
-        
+        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message))
+        {
+        }
 
 
         public void Dispose()
@@ -39,21 +45,4 @@ namespace PlayHouseConnector
             Payload.Dispose();
         }
     }
-
-    public interface IReplyPacket : IBasePacket
-    {
-        public ushort ErrorCode { get; }
-        public int MsgId { get;}
-        public bool IsSuccess();
-
-        //public Stream GetStream();
-
-        public ReadOnlySpan<byte> Data { get; }
-
-    }
-
-   
-
-
-
 }

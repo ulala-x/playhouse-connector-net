@@ -1,20 +1,19 @@
 ﻿using CommonLib;
-using playhouse_connector_net.network;
 using System;
-using System.IO;
-using System.Text;
 using System.Threading;
+using PlayHouse.Utils;
 
-namespace PlayHouseConnector.network
+namespace PlayHouseConnector.Network
 {
     class TcpClient : NetCoreServer.TcpClient, IClient
     {
-        private IConnectorListener _connectorListener;
-        private PacketParser _packetParser = new PacketParser();
-        private RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
-        private RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
-        private RingBufferStream _stream;
+        private readonly IConnectorListener _connectorListener;
+        private readonly PacketParser _packetParser = new PacketParser();
+        private readonly RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
+        private readonly RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
+        private readonly RingBufferStream _stream;
         private bool _stop = false;
+        private LOG<TcpClient> _log = new();
 
         public void DisconnectAndStop()
         {
@@ -27,7 +26,7 @@ namespace PlayHouseConnector.network
         public TcpClient(string host, int port, Connector connector, RequestCache requestCache,
             AsyncManager asyncManager) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this, requestCache,asyncManager);
+            _connectorListener = new ConnectorListener(connector, this, requestCache, asyncManager);
             _stream = new RingBufferStream(_recvBuffer);
 
             OptionNoDelay = true;
@@ -39,8 +38,7 @@ namespace PlayHouseConnector.network
 
         protected override void OnConnected()
         {
-            LOG.Info($"Connected id:{Id}",GetType());
-            LOG.Info($"Tcp Socket client connected a new session with Id {Id}",GetType());
+            _log.Info(()=>$"Tcp Socket client connected  - [sid:{Id}]");
 
             _connectorListener.OnConnected();
             _stop = false;
@@ -48,8 +46,7 @@ namespace PlayHouseConnector.network
 
         protected override void OnDisconnected()
         {
-
-            LOG.Info($"TCP client disconnected a session with Id {Id}", GetType());
+            _log.Info(()=>$"TCP client disconnected  - [sid:{Id}]");
             _connectorListener.OnDisconnected();
         }
 
@@ -59,19 +56,16 @@ namespace PlayHouseConnector.network
             {
                 _stream.Write(buffer, (int)offset, (int)size);
                 var packets = _packetParser.Parse(_recvBuffer);
-                packets.ForEach(packet => {
-                        _connectorListener.OnReceive(packet);
-                });
+                packets.ForEach(packet => { _connectorListener.OnReceive(packet); });
 
             }
             catch (Exception ex)
             {
-                LOG.Error($"packet  exception occurred , disconnect connection: {ex}",GetType(),ex);
+                _log.Error(()=>$"OnReceived Exception - [exception:{ex}]");
                 Disconnect();
             }
-
-            //Console.WriteLine(Encoding.UTF8.GetString(buffer, (int)offset, (int)size));
         }
+
 
         public void ClientConnectAsync()
         {
@@ -85,7 +79,7 @@ namespace PlayHouseConnector.network
 
         public void ClientConnect()
         {
-            base.Connect();
+            base.ConnectAsync();
         }
 
         public void ClientDisconnect()
@@ -107,14 +101,10 @@ namespace PlayHouseConnector.network
                 base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
             }
         }
+
         public bool IsStopped()
         {
             return _stop;
-        }
-
-        public bool ClientReconnect()
-        {
-            return base.ReconnectAsync();
         }
     }
 }

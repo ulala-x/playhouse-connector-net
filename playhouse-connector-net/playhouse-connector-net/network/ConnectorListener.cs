@@ -1,15 +1,10 @@
-﻿using PlayHouseConnector;
-using PlayHouseConnector.network;
-using System.Threading;
-
-namespace playhouse_connector_net.network
+﻿namespace PlayHouseConnector.Network
 {
     internal class ConnectorListener : IConnectorListener
     {
         private Connector _connector;
         private IClient _client;
 
-        private int _retryCnt = 0;
         private RequestCache _requestCache;
         private AsyncManager _asyncManager;
         
@@ -26,44 +21,20 @@ namespace playhouse_connector_net.network
         {
             _asyncManager.AddJob(() =>
             {
-                if (_retryCnt > 0)
-                {
-                    _connector.CallReconnect(_retryCnt);
-                }
-                else
-                {
-                    _connector.CallConnect();
-                }
+                _connector.CallConnect();
             });
-
-            _retryCnt = 0;
-
         }
-
   
         public void OnDisconnected()
         {
-            int reconnectCount = _connector.ConnectorConfig.ReconnectCount;
-            int reconnectDelay = _connector.ConnectorConfig.ReconnectDelay;
-            
-            if (!_client.IsStopped() && _retryCnt < reconnectCount)
+            _asyncManager.AddJob(() =>
             {
-                _retryCnt++;
-                Thread.Sleep(reconnectCount * 1000);
-                _client.ClientConnectAsync();
-            }
-            else
-            {
-                _asyncManager.AddJob(() =>
-                {
-                    _connector.CallDisconnected();
-                });
-            }
+                _connector.CallDisconnected();
+            });
         }
 
         public void OnReceive(ClientPacket clientPacket)
         {
-
             _asyncManager.AddJob(() =>
             {
                 if (clientPacket.MsgSeq > 0)
@@ -77,7 +48,5 @@ namespace playhouse_connector_net.network
                 
             });
         }
-
-
     }
 }

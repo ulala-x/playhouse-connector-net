@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PlayHouseConnector.network
+﻿namespace PlayHouseConnector.Network
 {
-    internal interface BasePacketListener
+    internal interface IBasePacketListener
     {
         void OnConnect();
         void OnDisconnected();

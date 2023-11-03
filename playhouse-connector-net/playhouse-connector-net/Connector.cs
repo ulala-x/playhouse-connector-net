@@ -1,46 +1,57 @@
-﻿using PlayHouseConnector.network;
+﻿using PlayHouseConnector.Network;
 using System;
-using playhouse_connector_net.network;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using CommonLib;
+using PlayHouse.Utils;
 
+//using ReplyCallback = System.Action<ushort, PlayHouseConnector.IPacket>;
 namespace PlayHouseConnector
 {
     public class Connector
     {
         private ClientNetwork? _clientNetwork;        
         private readonly RequestCache _requestCache;
-        internal readonly ConnectorConfig ConnectorConfig;
+        private readonly ConnectorConfig _connectorConfig;
+        private bool _connectChecker = false;
 
-        public event Action? OnConnect;
-        public event Action<int>? OnReconnect;
-        //public event Action<ushort, Packet>? OnApiReceive;
-        public event Action<ushort,int, Packet>? OnReceive;
-        public event Action? OnDiconnect;
-        protected readonly AsyncManager AsyncManager = new();
-        TaskCompletionSource<bool>? _defferedOnConnector = null;
-
+        public event Action<bool>? OnConnect;
+        public event Action<ushort,IPacket>? OnReceive; //serviceId,packet
+        public event Action<ushort,int, IPacket>? OnReceiveEx; //serviceId,stageKey,packet
+        public event Action<ushort,IPacket, IPacket>? OnCommonReply;//serviceId,request,reply
+        public event Action<ushort,int,IPacket, IPacket>? OnCommonReplyEx;//serviceId,stageKey,request,reply
         
-        public void Start()
+        public event Action<ushort,ushort, IPacket>? OnError; //serviceId,errorCode,request
+        public event Action<ushort,int,ushort, IPacket>? OnErrorEx; //serviceId,stagekey,errorCode,request
+        
+        public event Action? OnDisconnectAction;
+        
+        internal readonly AsyncManager AsyncManager = new();
+        TaskCompletionSource<bool>? _taskOnConnector = null;
+
+        private readonly Stopwatch _stopwatch = new();
+        private LOG<Connector> _log = new();
+        
+        
+        public void MainThreadAction()
         {
             AsyncManager.MainThreadAction();
         }
-
-
+        
+        
         public Connector(ConnectorConfig config)
         {            
-            ConnectorConfig = config;
-            _requestCache = new RequestCache(config.ReqestTimeout,AsyncManager);
+            _connectorConfig = config;
+            _requestCache = new RequestCache(config.RequestTimeout);
 
             PooledBuffer.Init(1024 * 1024);
         }
         
-
         public void Connect(string host,int port)
         {
 
-            if (ConnectorConfig.UseWebsocket)
+            if (_connectorConfig.UseWebsocket)
             {
                 _clientNetwork = new ClientNetwork(new WsClient(host, port, this, _requestCache,AsyncManager));
             }
@@ -49,22 +60,18 @@ namespace PlayHouseConnector
                 _clientNetwork = new ClientNetwork(new TcpClient(host,port,this, _requestCache,AsyncManager));                
             }
 
-            _clientNetwork.ConnectAsync();
+            _clientNetwork.Connect();
         }
 
-        public async Task ConnectAsync(string host, int port)
+        public async Task<bool> ConnectAsync(string host, int port)
         {
             Connect(host, port);
-            _defferedOnConnector = new();
-            await _defferedOnConnector.Task;
+            _taskOnConnector = new();
+            return await _taskOnConnector.Task;
         }
 
 
-        public bool Reconnect()
-        {
-            return _clientNetwork!.Reconnect();
-        }
-
+   
         public void Disconnect() 
         {
             _clientNetwork!.DisconnectAsync();
@@ -75,89 +82,158 @@ namespace PlayHouseConnector
             return _clientNetwork!.IsConnect();
         }
 
-        public void SendToApi(ushort serviceId,Packet packet)
+        private void _Request(ushort serviceId, IPacket packet, int stageKey,ushort seq)
         {
-            SendToStage(serviceId,0,packet);
-        }
-        public void RequestToApi(ushort serviceId,  Packet packet, Action<IReplyPacket> callback)
-        {
-            RequestToStage(serviceId,0,packet,callback);
-        }
+            if (_connectorConfig.EnableLoggingResponseTime)
+            {
+                _stopwatch.Reset();
+                _stopwatch.Start();
+            }
 
-        public async Task<IReplyPacket> RequestToApi(ushort serviceId, Packet packet)
-        {
-            return await RequestToStage(serviceId,0,packet);
-        }
-
-        private void SendToStage(ushort serviceId,int stageindex,Packet packet) 
-        {
-            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageindex), packet);
-            _clientNetwork!.Send(clientPacket);
-        }
-
-        private void RequestToStage(ushort serviceId, int stageindex, Packet packet,Action<IReplyPacket> callback) 
-        { 
-            ushort seq = (ushort)_requestCache.GetSequence();
-            _requestCache.Put(seq,new ReplyObject(seq,packet.MsgId,AsyncManager,callback));
-            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageKey), packet);
             clientPacket.SetMsgSeq(seq);
             _clientNetwork!.Send(clientPacket);
-            
         }
 
-        private async Task<IReplyPacket> RequestToStage(ushort serviceId, int stageindex, Packet packet)
+        private void _Send(ushort serviceId, IPacket packet, int stageKey)
+        {
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageKey), packet);
+            _clientNetwork!.Send(clientPacket);
+        }
+
+        public void Send(ushort serviceId,IPacket packet)
+        {
+            _Send(serviceId, packet, 0);
+        }
+        public void SendEx(ushort serviceId,int stageKey,IPacket packet)
+        {
+            _Send(serviceId, packet, stageKey);
+        }
+        public void Request(ushort serviceId,  IPacket request, Action<IPacket> callback)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
-            var deferred = new TaskCompletionSource<ReplyPacket>();
-            _requestCache.Put(seq, new ReplyObject(seq,packet.MsgId,AsyncManager,null,deferred));
-            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageindex), packet);
-            clientPacket.SetMsgSeq(seq);
-            _clientNetwork!.Send(clientPacket);
+      
+            _requestCache.Put(seq, new ReplyObject(seq,AsyncManager, (errorCode, reply) =>
+            {
+                if (errorCode == 0)
+                {
+                    OnCommonReply?.Invoke(serviceId,request,reply);
+                    callback.Invoke(reply);
+                }
+                else
+                {
+                    OnError?.Invoke(serviceId,errorCode,request);    
+                }
+            }));
+
+            _Request(serviceId,request,0,seq);
+        }
+        public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey = 1)
+        {
+            ushort seq = (ushort)_requestCache.GetSequence(); 
+      
+            _requestCache.Put(seq, new ReplyObject(seq,AsyncManager, (errorCode, reply) =>
+            {
+                if (errorCode == 0)
+                {
+                    if (_connectorConfig.EnableLoggingResponseTime)
+                    {
+                        _stopwatch.Stop();
+                        _log.Debug(()=>$"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+                    }
+                    OnCommonReplyEx?.Invoke(serviceId,stageKey,request,reply);
+                    callback.Invoke(reply);
+                }
+                else
+                {
+                    OnErrorEx?.Invoke(serviceId,stageKey,errorCode,request);    
+                }
+            }));
+
+            _Request(serviceId,request,stageKey,seq);
+        }
+
+        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request)
+        {
+            return await RequestExAsync(serviceId, request, 0);
+        }
+        public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey = 1)
+        {
+            ushort seq = (ushort)_requestCache.GetSequence(); 
+            var deferred = new TaskCompletionSource<IPacket>();
+      
+            _requestCache.Put(seq, new ReplyObject(seq,AsyncManager, (errorCode, reply) =>
+            {
+                if (errorCode == 0)
+                {
+                    if (_connectorConfig.EnableLoggingResponseTime)
+                    {
+                        _stopwatch.Stop();
+                        _log.Debug(()=>$"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+                    }
+                    
+                    deferred.SetResult(reply);
+                }
+                else
+                {
+                    deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));    
+                }
+            }));
             
+         
+            _Request(serviceId,request,stageKey,seq);
             return await deferred.Task;
         }
 
-        internal void CallReconnect(int retryCnt)
-        {
-            OnReconnect?.Invoke(retryCnt);
-        }
-
+        
         internal void CallConnect()
         {
-            OnConnect?.Invoke();
-            _defferedOnConnector?.SetResult(true);
-            _defferedOnConnector = null;
+            Thread.Sleep(TimeSpan.FromMilliseconds(300));
+              
+            _connectChecker = true;
+            OnConnect?.Invoke(true);
+            _taskOnConnector?.SetResult(true);
+            _taskOnConnector = null;
         }
 
-        internal void CallReceive(TargetId targetId, Packet packet)
+        internal void CallReceive(TargetId targetId, IPacket packet)
         {
-            if (OnReceive == null)
             {
-                LOG.Error("OnReceive callback not bind",this.GetType());
+                if (targetId.StageIndex == 0)
+                {
+                    if (OnReceive == null)
+                    {
+                        _log.Error(()=>"OnReceive callback not bind");
+                    }
+                    OnReceive?.Invoke(targetId.ServiceId,  packet);
+                }
+                else
+                {
+                    if (OnReceiveEx == null)
+                    {
+                        _log.Error(()=>"OnReceiveEx callback not bind");
+                    }
+                    OnReceiveEx?.Invoke(targetId.ServiceId, targetId.StageIndex, packet);
+                }
+    
+            }
+        }
+        internal void CallDisconnected()
+        {
+             //connect 의 결과
+            if (_connectChecker == false)
+            {
+                OnConnect?.Invoke(false);
+                _taskOnConnector?.SetResult(false);
             }
             else
             {
-                OnReceive.Invoke(targetId.ServiceId, targetId.StageIndex, packet);    
+                _connectChecker = false;
+                OnDisconnectAction?.Invoke();    
             }
-            
-            // if(targetId.ServiceId == 0)
-            // {
-            //     OnApiReceive?.Invoke(targetId.ServiceId, packet);
-            // }
-            // else
-            // {
-            //     OnStageReceive?.Invoke(targetId.ServiceId,targetId.StageIndex, packet);
-            // }
+
+            _taskOnConnector = null;
 
         }
-
-        internal void CallDisconnected()
-        {
-            OnDiconnect?.Invoke();
-        }
-
-
-
-
     }
 }

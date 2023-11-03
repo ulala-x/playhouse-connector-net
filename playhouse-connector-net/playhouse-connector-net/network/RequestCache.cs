@@ -1,61 +1,41 @@
 ﻿using PlayHouse.Utils;
-using playhouse_connector_net.network;
 using System;
 using System.Collections.Specialized;
 using System.Runtime.Caching;
-using System.Threading.Tasks;
 
-namespace PlayHouseConnector.network
+namespace PlayHouseConnector.Network
 {
     public class ReplyObject
     {
-        private Action<ReplyPacket>? _replyCallback = null;
-        private TaskCompletionSource<ReplyPacket>? _taskCompletionSource= null;
+        private Action<ushort ,IPacket>? _replyCallback;
         private AsyncManager _asyncManager;
-        public DateTime RegisterDate { get; set; } = DateTime.Now;
         public int MsgSeq { get; set; }
-        public int MsgId { get; set; }
-        public ReplyObject(int msgSeq,int msgId,AsyncManager asyncManager,Action<ReplyPacket>? callback = null, 
-            TaskCompletionSource<ReplyPacket>? taskCompletionSource = null)
+        public ReplyObject(int msgSeq,AsyncManager asyncManager,Action<ushort,IPacket>? callback = null)
         {
             MsgSeq = msgSeq;
-            MsgId = msgId;
             _asyncManager = asyncManager;
             _replyCallback = callback;
-            _taskCompletionSource = taskCompletionSource;
         }
 
-        public void OnReceive(ReplyPacket replayPacket)
+        public void OnReceive(ushort errorCode,IPacket packet)
         {
             _asyncManager.AddJob(() =>
             {
-                _replyCallback?.Invoke(replayPacket);
-                _taskCompletionSource?.SetResult(replayPacket);
+                _replyCallback?.Invoke(errorCode,packet);
             });
-        }
-
-        public void Throw(ushort errorCode)
-        {
-            _asyncManager.AddJob(() =>
-            {
-                _replyCallback?.Invoke(ClientPacket.OfErrorPacket(errorCode));
-                _taskCompletionSource?.SetResult(ClientPacket.OfErrorPacket(errorCode));
-            });
-            //_replyCallback?.Throws(exception);
-            //_taskCompletionSource?.SetException(exception);
         }
     }
     public class RequestCache
     {
-        private AtomicShort _sequece = new AtomicShort();
-        private CacheItemPolicy _policy;
-        private const ushort requestTimeoutErrorCode = 60003;
-        private  MemoryCache _cache ;
-        private AsyncManager _asyncManager;
+        
+        private LOG<RequestCache> _log = new();
+        private readonly AtomicShort _sequence = new();
+        private readonly CacheItemPolicy _policy;
+        private const ushort RequestTimeoutErrorCode = 60003;
+        private readonly MemoryCache _cache ;
 
-        public RequestCache(int timeout, AsyncManager asyncManager)
+        public RequestCache(int timeout)
         {
-            _asyncManager = asyncManager;
             NameValueCollection cacheSettings = new ()
             {
                 {"CacheMemoryLimitMegabytes", "10"},
@@ -68,27 +48,23 @@ namespace PlayHouseConnector.network
             }
 
             _cache =  new("PlayHouseConnector", cacheSettings);
-            _policy = new CacheItemPolicy() ;
-            _policy.SlidingExpiration = TimeSpan.FromSeconds(timeout);
-
-
-            // Set a callback to be called when the cache item is removed
-            _policy.RemovedCallback = new CacheEntryRemovedCallback((args) => {
-                if (args.RemovedReason == CacheEntryRemovedReason.Expired)
-                {
-                    var replyObject = (ReplyObject)args.CacheItem.Value;
-                    LOG.Error($"MsgSeq:{replyObject.MsgSeq}, MsgId:{replyObject.MsgId} message timeout {replyObject.RegisterDate}",GetType());
-                    replyObject.OnReceive(ClientPacket.OfErrorPacket(requestTimeoutErrorCode));
+            _policy = new CacheItemPolicy
+            {
+                SlidingExpiration = TimeSpan.FromSeconds(timeout),
+                // Set a callback to be called when the cache item is removed
+                RemovedCallback = (args) => {
+                    if (args.RemovedReason == CacheEntryRemovedReason.Expired)
+                    {
+                        var replyObject = (ReplyObject)args.CacheItem.Value;
+                        replyObject.OnReceive(RequestTimeoutErrorCode,new Packet());
+                    }
                 }
-            });
-
-            // Add item to the cache with the specified policy
-            //MemoryCache.Default.Add(cacheItem, policy);
+            };
         }
 
         public int GetSequence()
         {
-            return _sequece.IncrementAndGet();
+            return _sequence.IncrementAndGet();
         }
 
         public void Put(int seq,ReplyObject replyObject)
@@ -105,17 +81,23 @@ namespace PlayHouseConnector.network
         public void OnReply(ClientPacket clientPacket)
         {
             int msgSeq = clientPacket.MsgSeq;
+            int stageKey = clientPacket.Header.StageIndex;
             string key = msgSeq.ToString();
-            ReplyObject? replyObject = _cache.Get(key) as ReplyObject ;
+            ReplyObject? replyObject = (ReplyObject?)_cache.Get(key) ;
 
-            if (replyObject != null) { 
-                replyObject.OnReceive(clientPacket.ToReplyPacket());
+            if (replyObject != null)
+            {
+                var packet = clientPacket.ToPacket();
+                var errorCode = clientPacket.Header.ErrorCode;
+                replyObject.OnReceive(errorCode,packet);
                 _cache.Remove(key);
             }
             else
             {
-                LOG.Error($"msgSeq:{msgSeq},MsgId{clientPacket.MsgId} request is not exist",GetType());
+                _log.Error(
+                    ()=>$"OnReply Already Removed - [errorCode:{clientPacket.Header.ErrorCode},msgSeq:{msgSeq},msgId{clientPacket.MsgId},stageKey:{stageKey}]");    
             }
+            
         }
     }
 

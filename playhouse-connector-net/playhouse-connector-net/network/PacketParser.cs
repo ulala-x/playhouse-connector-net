@@ -1,20 +1,18 @@
 ﻿using CommonLib;
-using playhouse_connector_net;
 using System;
 using System.Collections.Generic;
-using System.Net;
+using PlayHouse.Utils;
 
-namespace PlayHouseConnector.network
+namespace PlayHouseConnector.Network
 {
-    public class PacketParser
+    public sealed class PacketParser
     {
-        
         public const int MAX_PACKET_SIZE = 65535;
         public const int HEADER_SIZE = 13;
         //public const int LENGTH_FIELD_SIZE = 3;
-        
+        private LOG<PacketParser> _log = new();
 
-        public virtual List<ClientPacket> Parse(RingBuffer buffer)
+        public List<ClientPacket> Parse(RingBuffer buffer)
         {
             
             var packets = new List<ClientPacket>();
@@ -27,7 +25,7 @@ namespace PlayHouseConnector.network
 
                     if (bodySize > MAX_PACKET_SIZE)
                     {
-                        LOG.Error($"Body size over : {bodySize}",GetType() );
+                        _log.Error(()=>$"Body size over : {bodySize}");
                         throw new IndexOutOfRangeException("BodySizeOver");
                     }
 
@@ -54,9 +52,9 @@ namespace PlayHouseConnector.network
                     packets.Add(clientPacket);
 
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    LOG.Error($"Exception while parsing packet",GetType(),e);
+                    _log.Error(()=>$"Exception while parsing packet - [exception:{ex}]");
                 }
             }
 

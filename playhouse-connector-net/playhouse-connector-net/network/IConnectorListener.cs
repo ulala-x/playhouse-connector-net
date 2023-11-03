@@ -1,6 +1,4 @@
-﻿using PlayHouseConnector.network;
-
-namespace playhouse_connector_net.network
+﻿namespace PlayHouseConnector.Network
 {
     public interface IConnectorListener
     {

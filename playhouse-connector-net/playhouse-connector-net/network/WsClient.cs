@@ -1,12 +1,12 @@
 ﻿
 using CommonLib;
 using NetCoreServer;
-using playhouse_connector_net.network;
 using System;
 using System.Text;
 using System.Threading;
+using PlayHouse.Utils;
 
-namespace PlayHouseConnector.network
+namespace PlayHouseConnector.Network
 {
     class WsClient : NetCoreServer.WsClient, IClient
     {
@@ -16,6 +16,7 @@ namespace PlayHouseConnector.network
         private readonly RingBuffer _sendBuffer = new(1024 * 1024);
         private readonly RingBufferStream _queueStream ;
         private bool _stop;
+        private LOG<WsClient> _log = new();
 
 
         public WsClient(string host, int port, Connector connector, RequestCache requestCache,
@@ -57,8 +58,7 @@ namespace PlayHouseConnector.network
         {
             _stop = false;
 
-            LOG.Info($"Connected id:{Id}", GetType());
-            Console.WriteLine($"Chat WebSocket client connected a new session with Id {Id}");
+            _log.Info(()=>$"Ws Socket client connected  - [sid:{Id}]");
             _connectorListener.OnConnected();
         }
 
@@ -78,10 +78,7 @@ namespace PlayHouseConnector.network
 
         protected override void OnDisconnected()
         {
-            base.OnDisconnected();
-
-            Console.WriteLine($"Chat WebSocket client disconnected a session with Id {Id}");
-
+            _log.Info(()=>$"Ws client disconnected  - [sid:{Id}]");
             _connectorListener.OnDisconnected();
         }
         
@@ -125,9 +122,6 @@ namespace PlayHouseConnector.network
             return _stop;
         }
 
-        public bool ClientReconnect()
-        {
-            return base.Reconnect();
-        }
+    
     }
 }

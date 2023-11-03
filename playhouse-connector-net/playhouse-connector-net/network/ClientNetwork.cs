@@ -1,17 +1,14 @@
-﻿using System;
-using System.Net.Sockets;
-
-namespace PlayHouseConnector.network
+﻿
+namespace PlayHouseConnector.Network
 {
     internal class ClientNetwork
     {
-        private IClient _client;
+        private readonly IClient _client;
 
         public ClientNetwork(IClient client)
         {
             _client= client;
         }
-
         
         internal void Connect()
         {
@@ -46,12 +43,7 @@ namespace PlayHouseConnector.network
             {
                 _client.Send(packet);
             }
-            
         }
-
-        internal bool Reconnect()
-        {
-            return  _client.ClientReconnect();
-        }
+      
     }
 }
