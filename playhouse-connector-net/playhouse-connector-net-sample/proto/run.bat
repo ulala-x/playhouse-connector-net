@@ -1,1 +1,0 @@
-﻿protoc --csharp_out=..\ sample.proto
