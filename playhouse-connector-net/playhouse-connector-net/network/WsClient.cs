@@ -10,19 +10,18 @@ namespace PlayHouseConnector.Network
 {
     class WsClient : NetCoreServer.WsClient, IClient
     {
-        private readonly IConnectorListener _connectorListener;
+        //private readonly IConnectorListener _connectorListener;
+        private readonly LOG<WsClient> _log = new();
         private readonly PacketParser _packetParser = new();
         private readonly RingBuffer _recvBuffer = new(1024*1024);
         private readonly RingBuffer _sendBuffer = new(1024 * 1024);
         private readonly RingBufferStream _queueStream ;
         private bool _stop;
-        private LOG<WsClient> _log = new();
+        private readonly ClientNetwork _clientNetwork;
 
-
-        public WsClient(string host, int port, Connector connector, RequestCache requestCache,
-            AsyncManager asyncManager) : base(host, port)
+        public WsClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this, requestCache,asyncManager);
+            _clientNetwork = clientNetwork;
 
             OptionNoDelay = true;
             OptionKeepAlive = true;
@@ -59,7 +58,7 @@ namespace PlayHouseConnector.Network
             _stop = false;
 
             _log.Info(()=>$"Ws Socket client connected  - [sid:{Id}]");
-            _connectorListener.OnConnected();
+            _clientNetwork.OnConnected();
         }
 
     
@@ -71,7 +70,7 @@ namespace PlayHouseConnector.Network
             _queueStream.Write(buffer, (int)offset, (int)size);
             var packets = _packetParser.Parse(_recvBuffer);
             packets.ForEach(packet => { 
-                _connectorListener.OnReceive(packet); 
+                _clientNetwork.OnReceive(packet); 
             });
             
         }
@@ -79,7 +78,7 @@ namespace PlayHouseConnector.Network
         protected override void OnDisconnected()
         {
             _log.Info(()=>$"Ws client disconnected  - [sid:{Id}]");
-            _connectorListener.OnDisconnected();
+            _clientNetwork.OnDisconnected();
         }
         
         public void ClientConnect()

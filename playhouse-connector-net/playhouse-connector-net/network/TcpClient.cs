@@ -7,13 +7,13 @@ namespace PlayHouseConnector.Network
 {
     class TcpClient : NetCoreServer.TcpClient, IClient
     {
-        private readonly IConnectorListener _connectorListener;
         private readonly PacketParser _packetParser = new PacketParser();
         private readonly RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
         private readonly RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
         private readonly RingBufferStream _stream;
         private bool _stop = false;
         private LOG<TcpClient> _log = new();
+        private readonly ClientNetwork _clientNetwork;
 
         public void DisconnectAndStop()
         {
@@ -23,10 +23,9 @@ namespace PlayHouseConnector.Network
                 Thread.Yield();
         }
 
-        public TcpClient(string host, int port, Connector connector, RequestCache requestCache,
-            AsyncManager asyncManager) : base(host, port)
+        public TcpClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)
         {
-            _connectorListener = new ConnectorListener(connector, this, requestCache, asyncManager);
+            _clientNetwork = clientNetwork;
             _stream = new RingBufferStream(_recvBuffer);
 
             OptionNoDelay = true;
@@ -40,14 +39,14 @@ namespace PlayHouseConnector.Network
         {
             _log.Info(()=>$"Tcp Socket client connected  - [sid:{Id}]");
 
-            _connectorListener.OnConnected();
+            _clientNetwork.OnConnected();
             _stop = false;
         }
 
         protected override void OnDisconnected()
         {
             _log.Info(()=>$"TCP client disconnected  - [sid:{Id}]");
-            _connectorListener.OnDisconnected();
+            _clientNetwork.OnDisconnected();
         }
 
         protected override void OnReceived(byte[] buffer, long offset, long size)
@@ -56,7 +55,7 @@ namespace PlayHouseConnector.Network
             {
                 _stream.Write(buffer, (int)offset, (int)size);
                 var packets = _packetParser.Parse(_recvBuffer);
-                packets.ForEach(packet => { _connectorListener.OnReceive(packet); });
+                packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
 
             }
             catch (Exception ex)
