@@ -8,21 +8,19 @@ namespace PlayHouseConnector.Network
     public class ReplyObject
     {
         private Action<ushort ,IPacket>? _replyCallback;
-        private AsyncManager _asyncManager;
         public int MsgSeq { get; set; }
-        public ReplyObject(int msgSeq,AsyncManager asyncManager,Action<ushort,IPacket>? callback = null)
+        public ReplyObject(int msgSeq,Action<ushort,IPacket>? callback = null)
         {
             MsgSeq = msgSeq;
-            _asyncManager = asyncManager;
             _replyCallback = callback;
         }
-
         public void OnReceive(ushort errorCode,IPacket packet)
         {
-            _asyncManager.AddJob(() =>
-            {
-                _replyCallback?.Invoke(errorCode,packet);
-            });
+            _replyCallback?.Invoke(errorCode,packet);
+            // _asyncManager.AddJob(() =>
+            // {
+            //     _replyCallback?.Invoke(errorCode,packet);
+            // });
         }
     }
     public class RequestCache

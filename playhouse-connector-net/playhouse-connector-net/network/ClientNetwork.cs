@@ -16,14 +16,14 @@ namespace PlayHouseConnector.Network
         private readonly RequestCache _requestCache;
         private readonly AsyncManager _asyncManager = new();
         TaskCompletionSource<bool>? _taskOnConnector = null;
-        private readonly Connector _connector;
+        private readonly IConnectorCallback _connectorCallback;
         private readonly ConnectorConfig _config;
         private readonly Stopwatch _stopwatch = new();
         private bool _connectChecker = false;
-        public ClientNetwork(Connector connector)
+        public ClientNetwork(ConnectorConfig config, IConnectorCallback connectorCallback)
         {
-            _connector = connector;
-            _config = connector.ConnectorConfig;
+            _connectorCallback = connectorCallback;
+            _config = config;
             _requestCache = new RequestCache(_config.RequestTimeout);
             PooledBuffer.Init(1024 * 1024);
             
@@ -94,46 +94,51 @@ namespace PlayHouseConnector.Network
             _Send(clientPacket);
         }
         
-        public void Request(ushort serviceId,  IPacket request, Action<IPacket> callback)
+        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
       
-            _requestCache.Put(seq, new ReplyObject(seq,_asyncManager, (errorCode, reply) =>
+            _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
-                if (errorCode == 0)
-                {
-                    _connector.CallCommonReply(serviceId,request,reply);
-                    callback.Invoke(reply);
-                }
-                else
-                {
-                    _connector.CallError(serviceId,errorCode,request);    
-                }
-            }));
 
-            _Request(serviceId,request,0,seq);
-        }
-        
-        public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
-        {
-            ushort seq = (ushort)_requestCache.GetSequence(); 
-      
-            _requestCache.Put(seq, new ReplyObject(seq,_asyncManager, (errorCode, reply) =>
-            {
-                if (errorCode == 0)
+                if (_config.EnableLoggingResponseTime)
                 {
-                    if (_config.EnableLoggingResponseTime)
+                    _stopwatch.Stop();
+                    _log.Debug(() => $"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+                }
+
+   
+                _asyncManager.AddJob(() =>
+                {
+                    if (errorCode == 0)
                     {
-                        _stopwatch.Stop();
-                        _log.Debug(()=>$"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+
+                        if (_config.UseExtendStage)
+                        {
+                            _connectorCallback.CommonReplyExCallback(serviceId, stageKey, request, reply);
+                        }
+                        else
+                        {
+                            _connectorCallback.CommonReplyCallback(serviceId, request, reply);
+
+                        }
+
+                        callback.Invoke(reply);
                     }
-                    _connector.CallCommonReplyEx(serviceId,stageKey,request,reply);
-                    callback.Invoke(reply);
-                }
-                else
-                {
-                    _connector.CallErrorEx(serviceId,stageKey,errorCode,request);    
-                }
+                    else
+                    {
+                        if (_config.UseExtendStage)
+                        {
+                            _connectorCallback.ErrorExCallback(serviceId, stageKey, errorCode, request);
+                        }
+                        else
+                        {
+                            _connectorCallback.ErrorCallback(serviceId, errorCode, request);
+                        }
+                    }
+                });
+                    
+                
             }));
 
             _Request(serviceId,request,stageKey,seq);
@@ -144,7 +149,7 @@ namespace PlayHouseConnector.Network
             ushort seq = (ushort)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<IPacket>();
       
-            _requestCache.Put(seq, new ReplyObject(seq,_asyncManager, (errorCode, reply) =>
+            _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
                 if (errorCode == 0)
                 {
@@ -154,11 +159,17 @@ namespace PlayHouseConnector.Network
                         _log.Debug(()=>$"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
                     }
                     
-                    deferred.SetResult(reply);
+                    _asyncManager.AddJob(() =>
+                    {
+                        deferred.SetResult(reply);    
+                    });
                 }
                 else
                 {
-                    deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));    
+                    _asyncManager.AddJob(() =>
+                    {
+                        deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
+                    });
                 }
             }));
          
@@ -176,7 +187,7 @@ namespace PlayHouseConnector.Network
 
                 if (_taskOnConnector == null)
                 {
-                    _connector.CallConnect(true);    
+                    _connectorCallback.ConnectCallback(true);    
                 }
                 else
                 {
@@ -200,11 +211,11 @@ namespace PlayHouseConnector.Network
                     var packet = clientPacket.ToPacket();
                     if (!_config.UseExtendStage)
                     {
-                        _connector.CallReceive(targetId.ServiceId,  packet);
+                        _connectorCallback.ReceiveCallback(targetId.ServiceId,  packet);
                     }
                     else
                     {
-                        _connector.CallReceiveEx(targetId.ServiceId, targetId.StageIndex, packet);
+                        _connectorCallback.ReceiveExCallback(targetId.ServiceId, targetId.StageIndex, packet);
                     }
                 }
                 
@@ -217,13 +228,13 @@ namespace PlayHouseConnector.Network
             {
                 if (_connectChecker == false)
                 {
-                    _connector.CallConnect(false);
+                    _connectorCallback.ConnectCallback(false);
                     _taskOnConnector?.SetResult(false);
                 }
                 else
                 {
                     _connectChecker = false;
-                    _connector.CallDisconnect();    
+                    _connectorCallback.DisconnectCallback();    
                 }
                 _taskOnConnector = null;
             });
