@@ -28,3 +28,4 @@ D:\work\ulala-x\playhouse-connector-net\playhouse-connector-net\playhouse-connec
 D:\work\ulala-x\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.csproj.CopyComplete
 D:\work\ulala-x\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.dll
 D:\work\ulala-x\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.pdb
+D:\work\ulala-x\playhouse-connector-net\playhouse-connector-net\playhouse-connector-net\obj\Debug\netstandard2.1\PlayHouseConnector.sourcelink.json
