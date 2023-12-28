@@ -11,6 +11,7 @@ namespace PlayHouseConnector
     public interface IPacket : IBasePacket
     {
         public int MsgId { get; }
+        public int MsgSeq { get;set; }
         public IPayload Payload { get; }
         public ReadOnlySpan<byte> Data { get; }
     }
@@ -18,24 +19,32 @@ namespace PlayHouseConnector
     //
     public class Packet : IPacket
     {
-        public IPayload Payload => _payload;
+        private int _msgSeq;
+        private int _msgId;
         private readonly IPayload _payload;
+        
+        public IPayload Payload => _payload;
 
-        public int MsgId { get; }
+        public int MsgId => _msgId;
+
         public ReadOnlySpan<byte> Data => _payload!.Data;
+        
+        public int MsgSeq { get => _msgSeq; set => _msgSeq = value; }
 
         public Packet(int msgId = 0)
         {
-            this.MsgId = msgId;
-            this._payload = new EmptyPayload();
+            _msgId = msgId;
+            _payload = new EmptyPayload();
+            _msgSeq = 0;
         }
 
-        public Packet(int msgId, IPayload payload) : this(msgId)
+        public Packet(int msgId, IPayload payload, int msgSeq = 0) : this(msgId)
         {
             _payload = payload;
+            _msgSeq = msgSeq;
         }
 
-        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message))
+        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message),0)
         {
         }
 
