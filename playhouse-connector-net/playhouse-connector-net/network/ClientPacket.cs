@@ -26,6 +26,11 @@ namespace PlayHouseConnector.Network
         public ushort ErrorCode { get; set; }
         public byte StageIndex { get; set; }
 
+        public  override string ToString()
+        {
+            return $"ServiceId: {ServiceId}, MsgId: {MsgId}, MsgSeq: {MsgSeq}, ErrorCode: {ErrorCode}, StageIndex: {StageIndex}";
+        }
+
 
         public Header(ushort serviceId = 0, int msgId =0, ushort msgSeq = 0,ushort errorCode= 0, byte stageIndex = 0)
         {
@@ -125,6 +130,10 @@ namespace PlayHouseConnector.Network
             Header.MsgSeq = seq;
         }
 
+        internal bool IsHeartBeat()
+        {
+            return MsgId == -1;
+        }
     }
 }
 

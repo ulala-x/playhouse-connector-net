@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections;
+using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,11 +21,19 @@ namespace PlayHouseConnector.Network
         private readonly ConnectorConfig _config;
         private readonly Stopwatch _stopwatch = new();
         private bool _connectChecker = false;
+        private bool _isAuthenticate = false;
+        private DateTime _lastReceivedTime = DateTime.Now;
+        private DateTime _lastSendHeartBeatTime = DateTime.Now;
+
+        private Timer _timer;
+        private bool _debugMode = false;
+
+
         public ClientNetwork(ConnectorConfig config, IConnectorCallback connectorCallback)
         {
             _connectorCallback = connectorCallback;
             _config = config;
-            _requestCache = new RequestCache(_config.RequestTimeout);
+            _requestCache = new RequestCache(_config.RequestTimeoutMs);
             PooledBuffer.Init(1024 * 1024);
             
             if (_config.UseWebsocket)
@@ -35,10 +44,70 @@ namespace PlayHouseConnector.Network
             {
                 _client = new TcpClient(_config.Host, _config.Port,this);                
             }
+            _timer = new Timer(TimerCallback, this, 100, 100);
         }
-        
-        internal void Connect()
+
+        private bool IsIdleState()
         {
+            if(_isAuthenticate == false || _config.ConnectionIdleTimeoutMs == 0 || _debugMode)
+            {
+                return false;
+            }
+
+            return GetElapedTime(_lastReceivedTime) > _config.ConnectionIdleTimeoutMs;
+        }
+
+        private static void TimerCallback(object? o)
+        {
+            ClientNetwork network = (ClientNetwork)o!;
+            if (network._client.IsClientConnected())
+            {
+                network._requestCache.CheckExpire();
+
+                network.SendHeartBeat();
+
+                if (network.IsIdleState())
+                {
+                    network._log.Debug(() => $"Client disconnect cause idle time");
+                    network.Disconnect();
+            }
+            }
+        }
+
+        private void UpdateTime(ref DateTime time)
+        {
+            time = DateTime.Now;
+        }
+        private long GetElapedTime(DateTime time)
+        {
+            var timeDifference = DateTime.Now - _lastReceivedTime;
+            return (long)timeDifference.TotalMilliseconds;
+        }
+
+        private void SendHeartBeat()
+        {
+            if(_config.HeartBeatIntervalMs == 0)
+            {
+                return;
+            }
+
+            if(GetElapedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
+            {
+                Packet packet = new Packet(-1);
+                Send(0, packet, 0);
+                UpdateTime(ref _lastSendHeartBeatTime);
+            }
+            
+        }
+
+        private void SendDebugMode()
+        {
+            Packet packet = new Packet(-2);
+            Send(0, packet, 0);
+        }
+        internal void Connect(bool debugMode)
+        {
+            _debugMode = debugMode;               
             _client.ClientConnect();
         }
 
@@ -47,10 +116,10 @@ namespace PlayHouseConnector.Network
             _client.ClientDisconnect();
         }
 
-        internal async Task<bool> ConnectAsync()
+        internal async Task<bool> ConnectAsync(bool debugMode)
         {
 
-            Connect();
+            Connect(debugMode);
             _taskOnConnector = new();
             return await _taskOnConnector.Task;
             
@@ -65,7 +134,13 @@ namespace PlayHouseConnector.Network
         {
             return _client.IsClientConnected();
         }
-        
+
+        internal bool IsAuthenticated()
+        {
+            return _isAuthenticate;
+        }
+
+
 
         private void _Send(ClientPacket packet)
         {
@@ -94,9 +169,21 @@ namespace PlayHouseConnector.Network
             _Send(clientPacket);
         }
         
-        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
+        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey,bool forAthenticated = false)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
+
+            if(IsConnect() == false)
+            {
+                OnError(serviceId, ConnectorErrorCode.DISCONNECTED, request);
+                return;
+            }
+
+            if(forAthenticated == false && _isAuthenticate == false)
+            {
+                OnError(serviceId, ConnectorErrorCode.UNAUTHENTICATED, request);
+                return;
+            }
       
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
@@ -112,6 +199,10 @@ namespace PlayHouseConnector.Network
                 {
                     if (errorCode == 0)
                     {
+                        if(forAthenticated)
+                        {
+                            _isAuthenticate = true;
+                        }
 
                         if (_config.UseExtendStage)
                         {
@@ -144,15 +235,32 @@ namespace PlayHouseConnector.Network
             _Request(serviceId,request,stageKey,seq);
         }
         
-        public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey)
+        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request,int stageKey,bool forAthenticate = false)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<IPacket>();
       
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
+                if (IsConnect() == false)
+                {
+                    deferred.SetException(new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, request, seq));
+                    return;
+                }
+
+                if (forAthenticate == false && _isAuthenticate == false)
+                {
+                    deferred.SetException(new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, seq));
+                    return;
+                }
+
                 if (errorCode == 0)
                 {
+                    if(forAthenticate)
+                    {
+                        _isAuthenticate = true;
+                    }
+
                     if (_config.EnableLoggingResponseTime)
                     {
                         _stopwatch.Stop();
@@ -179,10 +287,19 @@ namespace PlayHouseConnector.Network
         
         public void OnConnected()
         {
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(300));
+
+            if (_debugMode)
+            {
+                SendDebugMode();
+            }
+
+            UpdateTime(ref _lastReceivedTime);
+
+
             _asyncManager.AddJob(() =>
             {
-                Thread.Sleep(TimeSpan.FromMilliseconds(300));
-              
                 _connectChecker = true;
 
                 if (_taskOnConnector == null)
@@ -199,6 +316,8 @@ namespace PlayHouseConnector.Network
 
         public void OnReceive(ClientPacket clientPacket)
         {
+            UpdateTime(ref _lastReceivedTime);
+
             _asyncManager.AddJob(() =>
             {
                 if (clientPacket.MsgSeq > 0)
@@ -224,6 +343,7 @@ namespace PlayHouseConnector.Network
 
         public void OnDisconnected()
         {
+            _isAuthenticate = false;
             _asyncManager.AddJob(() =>
             {
                 if (_connectChecker == false)
@@ -247,6 +367,29 @@ namespace PlayHouseConnector.Network
         public IEnumerator MainCoroutineAction()
         {
             return _asyncManager.MainCoroutineAction();
+        }
+
+    
+        internal void OnError(ushort serviceId, ConnectorErrorCode errorCode,IPacket request) 
+        {
+            _asyncManager.AddJob(() =>
+            {
+                _connectorCallback.ErrorCallback(serviceId, (ushort)errorCode, request);
+            });
+        }
+
+        internal void OnErrorEx(ushort serviceId,int stageKey, ConnectorErrorCode errorCode, IPacket request)
+        {
+            _asyncManager.AddJob(() =>
+            {
+                _connectorCallback.ErrorExCallback(serviceId, stageKey, (ushort)errorCode, request);
+            });
+        }
+
+        internal bool IsDebugMode()
+        {
+            return _debugMode;
+
         }
     }
 }

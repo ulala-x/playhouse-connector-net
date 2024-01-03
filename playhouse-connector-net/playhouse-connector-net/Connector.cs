@@ -19,7 +19,8 @@ namespace PlayHouseConnector
 
         public ConnectorConfig ConnectorConfig { get; private set; } = new();
         private LOG<Connector> _log = new();
-        private ClientNetwork? _clientNetwork = null;        
+        private ClientNetwork? _clientNetwork = null;
+        
        
         public void MainThreadAction()
         {
@@ -31,8 +32,7 @@ namespace PlayHouseConnector
         }
         
         public Connector()
-        {            
-            
+        {
         }
         public void Init(ConnectorConfig config)
         {
@@ -40,14 +40,18 @@ namespace PlayHouseConnector
             _clientNetwork = new ClientNetwork(config, this);
         }
         
-        public void Connect()
+        public void Connect(bool debugMode = false)
         {
-            _clientNetwork!.Connect();
+            _clientNetwork!.Connect(debugMode);
         }
 
-        public async Task<bool> ConnectAsync()
+        public async Task<bool> ConnectAsync(bool debugMode = false)
         {
-            return await _clientNetwork!.ConnectAsync();
+            return await _clientNetwork!.ConnectAsync(debugMode);
+        }
+        public bool IsDebugMode()
+        {
+            return _clientNetwork!.IsDebugMode();
         }
    
         public void Disconnect() 
@@ -68,6 +72,11 @@ namespace PlayHouseConnector
         {
             _clientNetwork!.Send(serviceId, packet, stageKey);
         }
+
+        public void Authenticate(ushort serviceId, IPacket request, Action<IPacket> callback)
+        {
+            _clientNetwork!.Request(serviceId, request, callback, 0,true);
+        }
         public void Request(ushort serviceId,  IPacket request, Action<IPacket> callback)
         {
             _clientNetwork!.Request(serviceId,request,callback,0);
@@ -76,15 +85,24 @@ namespace PlayHouseConnector
         {
             _clientNetwork!.Request(serviceId,request,callback,stageKey);
         }
+
+        public async Task<IPacket> AuthenticateAsync(ushort serviceId, IPacket request)
+        {
+            return await _clientNetwork!.RequestAsync(serviceId, request, 0,true);
+        }
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request)
         {
-            return await RequestExAsync(serviceId, request, 0);
+            return await _clientNetwork!.RequestAsync(serviceId, request, 0);
         }
         public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey)
         {
-            return await _clientNetwork!.RequestExAsync(serviceId, request, stageKey);
+            return await _clientNetwork!.RequestAsync(serviceId, request, stageKey);
         }
 
+        public bool IsAuthenticated()
+        {
+            return _clientNetwork!.IsAuthenticated();
+        }
         public void ConnectCallback(bool result)
         {
             OnConnect?.Invoke(result);

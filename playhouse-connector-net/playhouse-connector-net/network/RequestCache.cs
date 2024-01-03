@@ -1,7 +1,8 @@
 ﻿using PlayHouse.Utils;
 using System;
-using System.Collections.Specialized;
-using System.Runtime.Caching;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PlayHouseConnector.Network
 {
@@ -9,6 +10,7 @@ namespace PlayHouseConnector.Network
     {
         private Action<ushort ,IPacket>? _replyCallback;
         public int MsgSeq { get; set; }
+        public DateTime _time = DateTime.Now;
         public ReplyObject(int msgSeq,Action<ushort,IPacket>? callback = null)
         {
             MsgSeq = msgSeq;
@@ -17,10 +19,12 @@ namespace PlayHouseConnector.Network
         public void OnReceive(ushort errorCode,IPacket packet)
         {
             _replyCallback?.Invoke(errorCode,packet);
-            // _asyncManager.AddJob(() =>
-            // {
-            //     _replyCallback?.Invoke(errorCode,packet);
-            // });
+        }
+
+        public bool IsExpired(int timeoutMs)
+        {
+            var difference = DateTime.Now - _time;
+            return difference.TotalMilliseconds > timeoutMs;
         }
     }
     public class RequestCache
@@ -28,36 +32,23 @@ namespace PlayHouseConnector.Network
         
         private LOG<RequestCache> _log = new();
         private readonly AtomicShort _sequence = new();
-        private readonly CacheItemPolicy _policy;
-        private const ushort RequestTimeoutErrorCode = 60003;
-        private readonly MemoryCache _cache ;
-
+        private int _timeoutMs = 0;
+        private ConcurrentDictionary<int, ReplyObject> _cache = new();
         public RequestCache(int timeout)
         {
-            NameValueCollection cacheSettings = new ()
-            {
-                {"CacheMemoryLimitMegabytes", "10"},
-                {"PhysicalMemoryLimitPercentage", "10"},
-            };
+            _timeoutMs = timeout;
+        }
 
-            if (timeout > 0)
+        public void CheckExpire()
+        {
+            if(_timeoutMs > 0)
             {
-                cacheSettings.Add("PollingInterval", "00:00:01");
-            }
-
-            _cache =  new("PlayHouseConnector", cacheSettings);
-            _policy = new CacheItemPolicy
-            {
-                SlidingExpiration = TimeSpan.FromSeconds(timeout),
-                // Set a callback to be called when the cache item is removed
-                RemovedCallback = (args) => {
-                    if (args.RemovedReason == CacheEntryRemovedReason.Expired)
-                    {
-                        var replyObject = (ReplyObject)args.CacheItem.Value;
-                        replyObject.OnReceive(RequestTimeoutErrorCode,new Packet());
-                    }
+                List<int> keysToDelete = _cache.Where(e => e.Value.IsExpired(_timeoutMs)).Select(e => e.Key).ToList();
+                foreach(int key in keysToDelete)
+                {
+                    Remove(key);
                 }
-            };
+            }
         }
 
         public int GetSequence()
@@ -67,35 +58,43 @@ namespace PlayHouseConnector.Network
 
         public void Put(int seq,ReplyObject replyObject)
         {
-            var cacheItem = new CacheItem(seq.ToString(), replyObject);
-            _cache.Add(cacheItem, _policy);
+            _cache[seq] = replyObject;
         }
 
         public ReplyObject? Get(int seq)
         {
-            return (ReplyObject)_cache.Get(seq.ToString());
+            if(_cache.TryGetValue(seq, out var replyObject))
+            {
+                return replyObject;
+            }
+            else
+            {
+                return null;
+            }
+        }
+        private void Remove(int seq)
+        {
+            _cache.TryRemove(seq, out var _);
         }
 
         public void OnReply(ClientPacket clientPacket)
         {
             int msgSeq = clientPacket.MsgSeq;
             int stageKey = clientPacket.Header.StageIndex;
-            string key = msgSeq.ToString();
-            ReplyObject? replyObject = (ReplyObject?)_cache.Get(key) ;
+            ReplyObject? replyObject = Get(msgSeq) ;
 
             if (replyObject != null)
             {
                 var packet = clientPacket.ToPacket();
                 var errorCode = clientPacket.Header.ErrorCode;
                 replyObject.OnReceive(errorCode,packet);
-                _cache.Remove(key);
+                Remove(msgSeq);
             }
             else
             {
                 _log.Error(
                     ()=>$"OnReply Already Removed - [errorCode:{clientPacket.Header.ErrorCode},msgSeq:{msgSeq},msgId{clientPacket.MsgId},stageKey:{stageKey}]");    
             }
-            
         }
     }
 
