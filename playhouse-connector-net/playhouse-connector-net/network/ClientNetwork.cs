@@ -163,13 +163,25 @@ namespace PlayHouseConnector.Network
             _Send(clientPacket);
         }
 
-        public void Send(ushort serviceId, IPacket packet, int stageKey)
+        public void Send(ushort serviceId, IPacket packet, int stageKey, bool forSystem = false)
         {
+            if (IsConnect() == false)
+            {
+                OnError(serviceId, ConnectorErrorCode.DISCONNECTED, packet);
+                return;
+            }
+
+            if (forSystem == false && _isAuthenticate == false)
+            {
+                OnError(serviceId, ConnectorErrorCode.UNAUTHENTICATED, packet);
+                return;
+            }
+
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageKey), packet);
             _Send(clientPacket);
         }
         
-        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey,bool forAthenticated = false)
+        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey,bool forSystem = false)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
 
@@ -179,7 +191,7 @@ namespace PlayHouseConnector.Network
                 return;
             }
 
-            if(forAthenticated == false && _isAuthenticate == false)
+            if(forSystem == false && _isAuthenticate == false)
             {
                 OnError(serviceId, ConnectorErrorCode.UNAUTHENTICATED, request);
                 return;
@@ -199,7 +211,7 @@ namespace PlayHouseConnector.Network
                 {
                     if (errorCode == 0)
                     {
-                        if(forAthenticated)
+                        if(forSystem)
                         {
                             _isAuthenticate = true;
                         }
@@ -317,6 +329,11 @@ namespace PlayHouseConnector.Network
         public void OnReceive(ClientPacket clientPacket)
         {
             UpdateTime(ref _lastReceivedTime);
+
+            if(clientPacket.IsHeartBeat())
+            {
+                return;
+            }
 
             _asyncManager.AddJob(() =>
             {
