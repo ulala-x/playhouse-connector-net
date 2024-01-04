@@ -66,10 +66,64 @@ namespace PlayHouseConnector
        
         public void Send(ushort serviceId,IPacket packet)
         {
+            if (IsConnect() == false)
+            {
+                if (OnError!=null)
+                {
+                    OnError(serviceId,(ushort) ConnectorErrorCode.DISCONNECTED, packet);
+                }
+                else
+                {
+                    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
+                }
+
+                return;
+            }
+
+            if (_clientNetwork!.IsAuthenticated() == false)
+            {
+                if (OnError != null)
+                {
+                    OnError(serviceId,(ushort) ConnectorErrorCode.UNAUTHENTICATED, packet);
+                }
+                else
+                {
+                    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
+                }
+                return;
+            }
+
             _clientNetwork!.Send(serviceId, packet, 0);
         }
         public void SendEx(ushort serviceId,int stageKey,IPacket packet)
         {
+            if (IsConnect() == false)
+            {
+                if (OnErrorEx != null)
+                {
+                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet);
+                }
+                else
+                {
+                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
+                }
+
+                return;
+            }
+
+            if (_clientNetwork!.IsAuthenticated() == false)
+            {
+                if (OnErrorEx != null)
+                {
+                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
+                }
+                else
+                {
+                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
+                }
+                return;
+            }
+
             _clientNetwork!.Send(serviceId, packet, stageKey);
         }
 
@@ -79,23 +133,72 @@ namespace PlayHouseConnector
         }
         public void Request(ushort serviceId,  IPacket request, Action<IPacket> callback)
         {
+            if (IsConnect() == false)
+            {
+                ErrorCallback(serviceId, (ushort)ConnectorErrorCode.DISCONNECTED, request);
+                return;
+            }
+
+            if (_clientNetwork!.IsAuthenticated() == false)
+            {
+                ErrorCallback(serviceId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
+                return;
+            }
+
             _clientNetwork!.Request(serviceId,request,callback,0);
         }
         public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
         {
+            if (IsConnect() == false)
+            {
+                ErrorExCallback(serviceId,stageKey,(ushort)ConnectorErrorCode.DISCONNECTED, request);
+                return;
+            }
+
+            if (_clientNetwork!.IsAuthenticated() == false)
+            {
+                ErrorExCallback(serviceId, stageKey,(ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
+                return;
+            }
+
             _clientNetwork!.Request(serviceId,request,callback,stageKey);
         }
 
         public async Task<IPacket> AuthenticateAsync(ushort serviceId, IPacket request)
         {
+            if (IsConnect() == false)
+            {
+                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+            }
+
             return await _clientNetwork!.RequestAsync(serviceId, request, 0,true);
         }
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request)
         {
+            if (IsConnect() == false)
+            {
+                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+            }
+
+            if(_clientNetwork!.IsAuthenticated() == false)
+            {
+                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
+            }
+
             return await _clientNetwork!.RequestAsync(serviceId, request, 0);
         }
         public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey)
         {
+            if (IsConnect() == false)
+            {
+                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+            }
+            if (_clientNetwork!.IsAuthenticated() == false)
+            {
+                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
+            }
+
+
             return await _clientNetwork!.RequestAsync(serviceId, request, stageKey);
         }
 

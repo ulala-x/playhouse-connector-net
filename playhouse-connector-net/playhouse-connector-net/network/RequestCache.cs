@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace PlayHouseConnector.Network
 {
@@ -43,7 +44,15 @@ namespace PlayHouseConnector.Network
         {
             if(_timeoutMs > 0)
             {
-                List<int> keysToDelete = _cache.Where(e => e.Value.IsExpired(_timeoutMs)).Select(e => e.Key).ToList();
+                List<int> keysToDelete = new();
+                
+                foreach(var item in _cache)
+                {
+                    if(item.Value.IsExpired(_timeoutMs))
+                    {
+                        item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(-3));
+                    }
+                }
                 foreach(int key in keysToDelete)
                 {
                     Remove(key);
@@ -75,6 +84,7 @@ namespace PlayHouseConnector.Network
         private void Remove(int seq)
         {
             _cache.TryRemove(seq, out var _);
+            
         }
 
         public void OnReply(ClientPacket clientPacket)

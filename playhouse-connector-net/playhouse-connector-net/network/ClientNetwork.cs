@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.Collections;
-using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +61,10 @@ namespace PlayHouseConnector.Network
             ClientNetwork network = (ClientNetwork)o!;
             if (network._client.IsClientConnected())
             {
-                network._requestCache.CheckExpire();
+                if(network._debugMode == false)
+                {
+                    network._requestCache.CheckExpire();
+                }
 
                 network.SendHeartBeat();
 
@@ -163,19 +165,8 @@ namespace PlayHouseConnector.Network
             _Send(clientPacket);
         }
 
-        public void Send(ushort serviceId, IPacket packet, int stageKey, bool forSystem = false)
+        public void Send(ushort serviceId, IPacket packet, int stageKey)
         {
-            if (IsConnect() == false)
-            {
-                OnError(serviceId, ConnectorErrorCode.DISCONNECTED, packet);
-                return;
-            }
-
-            if (forSystem == false && _isAuthenticate == false)
-            {
-                OnError(serviceId, ConnectorErrorCode.UNAUTHENTICATED, packet);
-                return;
-            }
 
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageKey), packet);
             _Send(clientPacket);
@@ -185,17 +176,6 @@ namespace PlayHouseConnector.Network
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
 
-            if(IsConnect() == false)
-            {
-                OnError(serviceId, ConnectorErrorCode.DISCONNECTED, request);
-                return;
-            }
-
-            if(forSystem == false && _isAuthenticate == false)
-            {
-                OnError(serviceId, ConnectorErrorCode.UNAUTHENTICATED, request);
-                return;
-            }
       
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
@@ -251,20 +231,9 @@ namespace PlayHouseConnector.Network
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
             var deferred = new TaskCompletionSource<IPacket>();
-      
+
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
-                if (IsConnect() == false)
-                {
-                    deferred.SetException(new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, request, seq));
-                    return;
-                }
-
-                if (forAthenticate == false && _isAuthenticate == false)
-                {
-                    deferred.SetException(new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, seq));
-                    return;
-                }
 
                 if (errorCode == 0)
                 {
@@ -288,7 +257,8 @@ namespace PlayHouseConnector.Network
                 {
                     _asyncManager.AddJob(() =>
                     {
-                        deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
+                        
+                        deferred.TrySetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
                     });
                 }
             }));
@@ -386,22 +356,6 @@ namespace PlayHouseConnector.Network
             return _asyncManager.MainCoroutineAction();
         }
 
-    
-        internal void OnError(ushort serviceId, ConnectorErrorCode errorCode,IPacket request) 
-        {
-            _asyncManager.AddJob(() =>
-            {
-                _connectorCallback.ErrorCallback(serviceId, (ushort)errorCode, request);
-            });
-        }
-
-        internal void OnErrorEx(ushort serviceId,int stageKey, ConnectorErrorCode errorCode, IPacket request)
-        {
-            _asyncManager.AddJob(() =>
-            {
-                _connectorCallback.ErrorExCallback(serviceId, stageKey, (ushort)errorCode, request);
-            });
-        }
 
         internal bool IsDebugMode()
         {
