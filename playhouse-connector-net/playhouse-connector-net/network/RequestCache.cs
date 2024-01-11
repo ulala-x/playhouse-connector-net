@@ -51,6 +51,7 @@ namespace PlayHouseConnector.Network
                     if(item.Value.IsExpired(_timeoutMs))
                     {
                         item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(-3));
+                        keysToDelete.Add(item.Key);
                     }
                 }
                 foreach(int key in keysToDelete)

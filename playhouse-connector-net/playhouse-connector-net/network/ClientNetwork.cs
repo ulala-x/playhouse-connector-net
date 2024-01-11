@@ -229,7 +229,8 @@ namespace PlayHouseConnector.Network
         
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request,int stageKey,bool forAthenticate = false)
         {
-            ushort seq = (ushort)_requestCache.GetSequence(); 
+            ushort seq = (ushort)_requestCache.GetSequence();
+
             var deferred = new TaskCompletionSource<IPacket>();
 
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
@@ -250,6 +251,7 @@ namespace PlayHouseConnector.Network
                     
                     _asyncManager.AddJob(() =>
                     {
+                        
                         deferred.SetResult(reply);    
                     });
                 }
@@ -258,7 +260,7 @@ namespace PlayHouseConnector.Network
                     _asyncManager.AddJob(() =>
                     {
                         
-                        deferred.TrySetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
+                        deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
                     });
                 }
             }));
