@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Threading;
 
 // ReSharper disable once CheckNamespace
 namespace PlayHouseConnector.Network
@@ -29,6 +28,11 @@ namespace PlayHouseConnector.Network
                 action.Invoke();
             }
             //Thread.Sleep(10);
+        }
+
+        internal void Clear()
+        {
+            _mainThreadActions.Clear();
         }
     }
 }

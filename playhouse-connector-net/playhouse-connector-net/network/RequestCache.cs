@@ -2,30 +2,32 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Timers;
 
 namespace PlayHouseConnector.Network
 {
     public class ReplyObject
     {
         private Action<ushort ,IPacket>? _replyCallback;
+        private int _timeoutMs;
         public int MsgSeq { get; set; }
         public DateTime _time = DateTime.Now;
-        public ReplyObject(int msgSeq,Action<ushort,IPacket>? callback = null)
+        
+        public ReplyObject(int msgSeq,int timeoutMs, Action<ushort,IPacket>? callback = null)
         {
             MsgSeq = msgSeq;
+            _timeoutMs = timeoutMs;
             _replyCallback = callback;
+            
         }
         public void OnReceive(ushort errorCode,IPacket packet)
         {
             _replyCallback?.Invoke(errorCode,packet);
         }
 
-        public bool IsExpired(int timeoutMs)
+        public bool IsExpired()
         {
             var difference = DateTime.Now - _time;
-            return difference.TotalMilliseconds > timeoutMs;
+            return difference.TotalMilliseconds > _timeoutMs;
         }
     }
     public class RequestCache
@@ -48,7 +50,7 @@ namespace PlayHouseConnector.Network
                 
                 foreach(var item in _cache)
                 {
-                    if(item.Value.IsExpired(_timeoutMs))
+                    if(item.Value.IsExpired())
                     {
                         item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(-3));
                         keysToDelete.Add(item.Key);

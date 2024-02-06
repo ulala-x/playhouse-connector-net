@@ -13,6 +13,8 @@ namespace PlayHouseConnector
         public int MsgId { get; }
         public IPayload Payload { get; }
         public ReadOnlySpan<byte> Data { get; }
+
+        public ushort MsgSeq { get; set; }
     }
 
     //
@@ -20,13 +22,15 @@ namespace PlayHouseConnector
     {
         private int _msgId;
         private readonly IPayload _payload;
-        
+        private ushort _seq;
         public IPayload Payload => _payload;
 
         public int MsgId => _msgId;
+        
 
         public ReadOnlySpan<byte> Data => _payload!.Data;
-        
+
+        public ushort MsgSeq { get => _seq; set => _seq = value; }
 
         public Packet(int msgId = 0)
         {

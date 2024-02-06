@@ -1,5 +1,4 @@
-﻿using System;
-using System.Dynamic;
+﻿using System.Collections.Generic;
 
 namespace PlayHouseConnector
 {
@@ -23,9 +22,12 @@ namespace PlayHouseConnector
 
             public bool UseWebsocket { get; set; } = false;
             public bool EnableLoggingResponseTime { get; set; } = false;
-            public bool UseExtendStage = false;
-            public string Host { get; set; } = String.Empty;
+            public string Host { get; set; } = string.Empty;
             public int Port { get; set; }  = 0;
+            public bool DebugMode { get; internal set; } = false;
+            public int RetryCount = 1;
+            public HashSet<ushort> StageIds { get; }  = new() ;
+
     }
    
 }

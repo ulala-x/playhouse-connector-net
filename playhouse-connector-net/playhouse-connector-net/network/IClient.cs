@@ -5,8 +5,8 @@
         void ClientConnect();
         void ClientDisconnect();
 
-        void ClientConnectAsync();
-        void ClientDisconnectAsync();
+        //void ClientConnectAsync();
+        //void ClientDisconnectAsync();
         bool IsClientConnected();
         void Send(ClientPacket packet);
         bool IsStopped();

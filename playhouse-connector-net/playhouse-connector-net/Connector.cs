@@ -8,19 +8,17 @@ namespace PlayHouseConnector
 {
     public class Connector : IConnectorCallback
     {
-        public event Action<bool>? OnConnect; //result
-        public event Action<ushort, IPacket>? OnReceive ; //(serviceId, packet) 
-        public event Action<ushort, int, IPacket>? OnReceiveEx; //(serviceId, stageKey, packet)
-        public event Action<ushort, IPacket, IPacket>? OnCommonReply; //(serviceId, request, reply)
-        public event Action<ushort, int, IPacket, IPacket>? OnCommonReplyEx;// (serviceId, stageKey, request, reply)
-        public event Action<ushort, ushort, IPacket>? OnError; // (serviceId, errorCode, request)
-        public event Action<ushort, int, ushort, IPacket>? OnErrorEx; //(serviceId,stageKey,errorCode,request)
+        public event Action? OnAuthenticate;
+        public event Action? OnReady; //result
+        public event Action? OnReconnected;
+        public event Action<ushort, IPacket>? OnApiReceive ; //(serviceId, packet) 
+        public event Action<ushort, ushort, IPacket>? OnApiError; // (serviceId, errorCode, request)
+        public event Action<ushort, int, IPacket>? OnStageReceive; //(serviceId, stageKey, packet)
+        public event Action<ushort, int, ushort, IPacket>? OnStageError; //(serviceId,stageKey,errorCode,request)
         public event Action? OnDisconnect;//
-
         public ConnectorConfig ConnectorConfig { get; private set; } = new();
         private LOG<Connector> _log = new();
         private ClientNetwork? _clientNetwork = null;
-        
        
         public void MainThreadAction()
         {
@@ -40,15 +38,15 @@ namespace PlayHouseConnector
             _clientNetwork = new ClientNetwork(config, this);
         }
         
-        public void Connect(bool debugMode = false)
+        public void Connect()
         {
-            _clientNetwork!.Connect(debugMode);
+            _clientNetwork!.Connect();
         }
+        //public async Task ConnectAsync()
+        //{
+        //    await _clientNetwork!.ConnectAsync();
+        //}
 
-        public async Task<bool> ConnectAsync(bool debugMode = false)
-        {
-            return await _clientNetwork!.ConnectAsync(debugMode);
-        }
         public bool IsDebugMode()
         {
             return _clientNetwork!.IsDebugMode();
@@ -56,179 +54,118 @@ namespace PlayHouseConnector
    
         public void Disconnect() 
         {
-            _clientNetwork!.DisconnectAsync();
+            _clientNetwork!.Disconnect(DisconnectType.Self_Disconnect);
         }
       
         public bool IsConnect() 
         {
             return _clientNetwork!.IsConnect();
         }
-       
-        public void Send(ushort serviceId,IPacket packet)
+
+        public async Task SendToApiAsync(ushort serviceId, IPacket packet)
         {
-            if (IsConnect() == false)
-            {
-                if (OnError!=null)
-                {
-                    OnError(serviceId,(ushort) ConnectorErrorCode.DISCONNECTED, packet);
-                }
-                else
-                {
-                    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
-                }
+            await _clientNetwork!.SendAsync(serviceId, packet, 0);
+        }
+        public async Task SendToStageAsync(ushort serviceId, int stageKey, IPacket packet)
+        {
 
-                return;
-            }
+            await _clientNetwork!.SendAsync(serviceId, packet, stageKey);
+        }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                if (OnError != null)
-                {
-                    OnError(serviceId,(ushort) ConnectorErrorCode.UNAUTHENTICATED, packet);
-                }
-                else
-                {
-                    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
-                }
-                return;
-            }
-
+        public void SendToApi(ushort serviceId,IPacket packet)
+        {
             _clientNetwork!.Send(serviceId, packet, 0);
         }
-        public void SendEx(ushort serviceId,int stageKey,IPacket packet)
+        public void SendToStage(ushort serviceId,int stageKey,IPacket packet)
         {
-            if (IsConnect() == false)
-            {
-                if (OnErrorEx != null)
-                {
-                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet);
-                }
-                else
-                {
-                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
-                }
-
-                return;
-            }
-
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                if (OnErrorEx != null)
-                {
-                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
-                }
-                else
-                {
-                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
-                }
-                return;
-            }
-
+            
             _clientNetwork!.Send(serviceId, packet, stageKey);
         }
 
-        public void Authenticate(ushort serviceId, IPacket request, Action<IPacket> callback)
+        public void Authenticate(ushort serviceId, IPacket request, Action<IPacket> callback, int timeoutMs = 0)
         {
-            _clientNetwork!.Request(serviceId, request, callback, 0,true);
+            if(timeoutMs == 0)
+            {
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
+            }
+            _clientNetwork!.Authenticate(serviceId, request, callback, timeoutMs);
         }
-        public void Request(ushort serviceId,  IPacket request, Action<IPacket> callback)
+        public void RequestToApi(ushort serviceId,  IPacket request, Action<IPacket> callback, int timeoutMs = 0)
         {
-            if (IsConnect() == false)
+            if (timeoutMs == 0)
             {
-                ErrorCallback(serviceId, (ushort)ConnectorErrorCode.DISCONNECTED, request);
-                return;
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
             }
-
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                ErrorCallback(serviceId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
-                return;
-            }
-
-            _clientNetwork!.Request(serviceId,request,callback,0);
+            _clientNetwork!.Request(serviceId,request,callback,0, timeoutMs);
         }
-        public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
+        public void RequestToStage(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey,int timeoutMs = 0)
         {
-            if (IsConnect() == false)
+            if (timeoutMs == 0)
             {
-                ErrorExCallback(serviceId,stageKey,(ushort)ConnectorErrorCode.DISCONNECTED, request);
-                return;
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
             }
-
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                ErrorExCallback(serviceId, stageKey,(ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
-                return;
-            }
-
-            _clientNetwork!.Request(serviceId,request,callback,stageKey);
+            _clientNetwork!.Request(serviceId,request,callback,stageKey, timeoutMs);
         }
 
-        public async Task<IPacket> AuthenticateAsync(ushort serviceId, IPacket request)
+        public async Task<IPacket> AuthenticateAsync(ushort serviceId, IPacket request,int timeoutMs=0)
         {
-            if (IsConnect() == false)
+            if (timeoutMs == 0)
             {
-                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
             }
-
-            return await _clientNetwork!.RequestAsync(serviceId, request, 0,true);
+            return await _clientNetwork!.AuthenticateAsync(serviceId, request, timeoutMs);
         }
-        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request)
+        public async Task<IPacket> RequestToApiAsync(ushort serviceId, IPacket request, int timeoutMs = 0)
         {
-            if (IsConnect() == false)
+            if (timeoutMs == 0)
             {
-                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
             }
-
-            if(_clientNetwork!.IsAuthenticated() == false)
-            {
-                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
-            }
-
-            return await _clientNetwork!.RequestAsync(serviceId, request, 0);
+            return await _clientNetwork!.RequestAsync(serviceId, request, 0, timeoutMs);
         }
-        public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey)
+        public async Task<IPacket> RequestToStageAsync(ushort serviceId, IPacket request,int stageKey,int timeoutMs = 0)
         {
-            if (IsConnect() == false)
+            if (timeoutMs == 0)
             {
-                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+                timeoutMs = ConnectorConfig.RequestTimeoutMs;
             }
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
-            }
-
-
-            return await _clientNetwork!.RequestAsync(serviceId, request, stageKey);
+            return await _clientNetwork!.RequestAsync(serviceId, request, stageKey, timeoutMs);
         }
 
         public bool IsAuthenticated()
         {
-            return _clientNetwork!.IsAuthenticated();
+            return _clientNetwork!.IsReady();
         }
-        public void ConnectCallback(bool result)
+        public void ConnectCallback()
         {
-            OnConnect?.Invoke(result);
-        }
-
-        public void ReceiveCallback(ushort serviceId, IPacket packet)
-        {
-            if(OnReceive != null)
+            if (OnAuthenticate != null)
             {
-                OnReceive.Invoke(serviceId, packet);
+                OnAuthenticate.Invoke();
             }
             else
             {
-                _log.Error(()=>"OnReceive is not initialized");
+                _log.Error(() => "OnAuthenticate is not initialized");
             }
-
+            //OnConnect?.Invoke(result);
         }
 
-        public void ReceiveExCallback(ushort serviceId, int stageKey, IPacket packet)
+        public void ReceiveApiCallback(ushort serviceId, IPacket packet)
         {
-            if (OnReceiveEx != null)
+            if(OnApiReceive != null)
             {
-                OnReceiveEx.Invoke(serviceId, stageKey, packet);
+                OnApiReceive.Invoke(serviceId, packet);
+            }
+            else
+            {
+                _log.Error(()=>"OnApiReceive is not initialized");
+            }
+        }
+
+        public void ReceiveStageCallback(ushort serviceId, int stageKey, IPacket packet)
+        {
+            if (OnStageReceive != null)
+            {
+                OnStageReceive.Invoke(serviceId, stageKey, packet);
             }
             else
             {
@@ -236,48 +173,33 @@ namespace PlayHouseConnector
             }
         }
 
-        public void CommonReplyCallback(ushort serviceId, IPacket request, IPacket reply)
+        public void ErrorApiCallback(ushort serviceId, ushort errorCode, IPacket request)
         {
-            if (OnCommonReply != null)
+            if (OnApiError != null)
             {
-                OnCommonReply.Invoke(serviceId, request, reply);
-            }
-        }
-
-        public void CommonReplyExCallback(ushort serviceId,int stageKey, IPacket request, IPacket reply)
-        {
-
-            if (OnCommonReplyEx != null)
-            {
-                OnCommonReplyEx.Invoke(serviceId, stageKey, request, reply);
-            }
-        }
-
-        public void ErrorCallback(ushort serviceId, ushort errorCode, IPacket request)
-        {
-            if (OnError != null)
-            {
-                OnError.Invoke(serviceId, errorCode, request);
+                OnApiError.Invoke(serviceId, errorCode, request);
             }
             else
             {
-                _log.Error(() => "OnError is not initialized");
+                _log.Error(() => "OnApiError is not initialized");
             }
         }
-        public void ErrorExCallback(ushort serviceId,int stageKey, ushort errorCode, IPacket request)
+        public void ErrorStageCallback(ushort serviceId,int stageKey, ushort errorCode, IPacket request)
         {
-            if (OnErrorEx != null)
+            if (OnStageError != null)
             {
-                OnErrorEx.Invoke(serviceId, stageKey, errorCode, request);
+                OnStageError.Invoke(serviceId, stageKey, errorCode, request);
             }
             else
             {
-                _log.Error(() => "OnErrorEx is not initialized");
+                _log.Error(() => "OnStageError is not initialized");
             }
         }
+
 
         public void DisconnectCallback()
         {
+
             if (OnDisconnect != null)
             {
                 OnDisconnect.Invoke();
@@ -288,5 +210,28 @@ namespace PlayHouseConnector
             }
         }
 
+        public void ReadyCallback()
+        {
+            if(OnReady != null)
+            {
+                OnReady.Invoke();
+            }
+            else
+            {
+                _log.Error(() => "OnReady is not initialized");
+            }
+        }
+
+        public void ReconnectedCallback()
+        {
+            if(OnReconnected != null)
+            {
+                OnReconnected.Invoke();
+            }
+            else
+            {
+                _log.Error(() => "OnReconnected is not initialized");
+            }
+        }
     }
 }
