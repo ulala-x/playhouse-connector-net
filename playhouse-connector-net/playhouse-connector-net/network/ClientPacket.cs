@@ -63,7 +63,7 @@ namespace PlayHouseConnector.Network
             return _buffer;
         }
 
-        public ReadOnlySpan<byte> Data => _buffer.AsSpan();
+        public ReadOnlyMemory<byte> Data => _buffer.AsMemory();
     }
 
 
@@ -123,7 +123,7 @@ namespace PlayHouseConnector.Network
             buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
             buffer.Write(Header.StageIndex);
 
-            buffer.Write(Payload.Data);
+            buffer.Write(Payload.DataSpan);
         }
 
         internal void SetMsgSeq(ushort seq)

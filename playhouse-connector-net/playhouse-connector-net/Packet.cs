@@ -12,7 +12,9 @@ namespace PlayHouseConnector
     {
         public int MsgId { get; }
         public IPayload Payload { get; }
-        public ReadOnlySpan<byte> Data { get; }
+        public ReadOnlyMemory<byte> Data { get; }
+        public ReadOnlySpan<byte> DataSpan => Data.Span;
+
     }
 
     //
@@ -25,7 +27,7 @@ namespace PlayHouseConnector
 
         public int MsgId => _msgId;
 
-        public ReadOnlySpan<byte> Data => _payload!.Data;
+        public ReadOnlyMemory<byte> Data => _payload.Data;
         
 
         public Packet(int msgId = 0)

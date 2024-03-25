@@ -6,7 +6,8 @@ namespace PlayHouseConnector
 {
     public interface IPayload : IDisposable
     {   
-        ReadOnlySpan<byte> Data { get; }
+        ReadOnlyMemory<byte> Data { get; }
+        ReadOnlySpan<byte> DataSpan => Data.Span;
     }
     public class ProtoPayload : IPayload
     {
@@ -20,7 +21,7 @@ namespace PlayHouseConnector
         {
         }
 
-        public ReadOnlySpan<byte> Data => (_proto.ToByteArray());
+        public ReadOnlyMemory<byte> Data => (_proto.ToByteArray());
     }
 
     public class EmptyPayload : IPayload
@@ -31,7 +32,7 @@ namespace PlayHouseConnector
         public void Dispose()
         {
         }
-        public ReadOnlySpan<byte> Data => new ReadOnlySpan<byte>();
+        public ReadOnlyMemory<byte> Data => new ReadOnlyMemory<byte>();
     }
 
   
