@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using PlayHouse.Utils;
+using PlayHouse;
 
 namespace PlayHouseConnector.Network
 {
@@ -9,7 +10,7 @@ namespace PlayHouseConnector.Network
     {
         private readonly PacketParser _packetParser = new PacketParser();
         private readonly RingBuffer _recvBuffer = new RingBuffer(1024 * 1024);
-        private readonly RingBuffer _sendBuffer = new RingBuffer(1024 * 1024);
+        private readonly PooledByteBuffer _sendBuffer = new PooledByteBuffer(1024 * 1024);
         private readonly RingBufferStream _stream;
         private bool _stop = false;
         private LOG<TcpClient> _log = new();

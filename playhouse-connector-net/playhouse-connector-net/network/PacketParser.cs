@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using PlayHouse.Utils;
+using PlayHouse;
 
 namespace PlayHouseConnector.Network
 {
@@ -44,11 +45,11 @@ namespace PlayHouseConnector.Network
                     ushort errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     
 
-                    var body = new PooledBuffer(bodySize);
+                    var body = new PooledByteBuffer(bodySize);
 
                     buffer.Read(body,bodySize);
 
-                    var clientPacket = new ClientPacket(new Header(serviceId,msgId,msgSeq,errorCode, stageIndex),new PooledBufferPayload(body));
+                    var clientPacket = new ClientPacket(new Header(serviceId,msgId,msgSeq,errorCode, stageIndex),new PooledByteBufferPayload(body));
                     packets.Add(clientPacket);
 
                 }

@@ -5,6 +5,7 @@ using System;
 using System.Text;
 using System.Threading;
 using PlayHouse.Utils;
+using PlayHouse;
 
 namespace PlayHouseConnector.Network
 {
@@ -14,7 +15,7 @@ namespace PlayHouseConnector.Network
         private readonly LOG<WsClient> _log = new();
         private readonly PacketParser _packetParser = new();
         private readonly RingBuffer _recvBuffer = new(1024*1024);
-        private readonly RingBuffer _sendBuffer = new(1024 * 1024);
+        private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024);
         private readonly RingBufferStream _queueStream ;
         private bool _stop;
         private readonly ClientNetwork _clientNetwork;
