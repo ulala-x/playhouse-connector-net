@@ -95,7 +95,7 @@ namespace PlayHouseConnector.Network
 
             if(GetElapedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
             {
-                Packet packet = new Packet(-1);
+                Packet packet = new Packet("-1");
                 Send(0, packet, 0);
                 UpdateTime(ref _lastSendHeartBeatTime);
             }
@@ -104,7 +104,7 @@ namespace PlayHouseConnector.Network
 
         private void SendDebugMode()
         {
-            Packet packet = new Packet(-2);
+            Packet packet = new Packet("-2");
             Send(0, packet, 0);
         }
         internal void Connect(bool debugMode)
@@ -152,7 +152,7 @@ namespace PlayHouseConnector.Network
             }
         }
 
-        private void _Request(ushort serviceId, IPacket packet, int stageKey,ushort seq)
+        private void _Request(ushort serviceId, IPacket packet, long stageId,ushort seq)
         {
             if (_config.EnableLoggingResponseTime)
             {
@@ -160,19 +160,18 @@ namespace PlayHouseConnector.Network
                 _stopwatch.Start();
             }
 
-            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageKey), packet);
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageId), packet);
             clientPacket.SetMsgSeq(seq);
             _Send(clientPacket);
         }
 
-        public void Send(ushort serviceId, IPacket packet, int stageKey)
+        public void Send(ushort serviceId, IPacket packet, long stageId)
         {
-
-            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageKey), packet);
+            var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId,stageId), packet);
             _Send(clientPacket);
         }
         
-        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey,bool forSystem = false)
+        public void Request(ushort serviceId, IPacket request, Action<IPacket> callback,long stageId,bool forSystem = false)
         {
             ushort seq = (ushort)_requestCache.GetSequence(); 
 
@@ -198,7 +197,7 @@ namespace PlayHouseConnector.Network
 
                         if (_config.UseExtendStage)
                         {
-                            _connectorCallback.CommonReplyExCallback(serviceId, stageKey, request, reply);
+                            _connectorCallback.CommonReplyExCallback(serviceId, stageId, request, reply);
                         }
                         else
                         {
@@ -212,7 +211,7 @@ namespace PlayHouseConnector.Network
                     {
                         if (_config.UseExtendStage)
                         {
-                            _connectorCallback.ErrorExCallback(serviceId, stageKey, errorCode, request);
+                            _connectorCallback.ErrorExCallback(serviceId, stageId, errorCode, request);
                         }
                         else
                         {
@@ -224,10 +223,10 @@ namespace PlayHouseConnector.Network
                 
             }));
 
-            _Request(serviceId,request,stageKey,seq);
+            _Request(serviceId,request,stageId,seq);
         }
         
-        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request,int stageKey,bool forAthenticate = false)
+        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request,long stageId,bool forAthenticate = false)
         {
             ushort seq = (ushort)_requestCache.GetSequence();
 
@@ -260,12 +259,12 @@ namespace PlayHouseConnector.Network
                     _asyncManager.AddJob(() =>
                     {
                         
-                        deferred.SetException(new PlayConnectorException(serviceId,stageKey,errorCode,request,seq));
+                        deferred.SetException(new PlayConnectorException(serviceId,stageId,errorCode,request,seq));
                     });
                 }
             }));
          
-            _Request(serviceId,request,stageKey,seq);
+            _Request(serviceId,request,stageId,seq);
             return await deferred.Task;
         }
         
@@ -315,7 +314,7 @@ namespace PlayHouseConnector.Network
                 }
                 else
                 {
-                    var targetId = new TargetId(clientPacket.ServiceId, clientPacket.Header.StageIndex);
+                    var targetId = new TargetId(clientPacket.ServiceId, clientPacket.Header.StageId);
                     var packet = clientPacket.ToPacket();
                     if (!_config.UseExtendStage)
                     {
@@ -323,7 +322,7 @@ namespace PlayHouseConnector.Network
                     }
                     else
                     {
-                        _connectorCallback.ReceiveExCallback(targetId.ServiceId, targetId.StageIndex, packet);
+                        _connectorCallback.ReceiveExCallback(targetId.ServiceId, targetId.StageId, packet);
                     }
                 }
                 

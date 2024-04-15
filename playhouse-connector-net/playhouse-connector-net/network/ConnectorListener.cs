@@ -43,7 +43,7 @@
 //                 }
 //                 else
 //                 {
-//                     _clientNetwork.CallReceive(new TargetId(clientPacket.ServiceId,clientPacket.Header.StageIndex), clientPacket.ToPacket());
+//                     _clientNetwork.CallReceive(new TargetId(clientPacket.ServiceId,clientPacket.Header.StageId), clientPacket.ToPacket());
 //                 }
 //                 
 //             });

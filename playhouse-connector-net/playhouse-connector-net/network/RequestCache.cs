@@ -50,7 +50,7 @@ namespace PlayHouseConnector.Network
                 {
                     if(item.Value.IsExpired(_timeoutMs))
                     {
-                        item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(-3));
+                        item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet("-3"));
                         keysToDelete.Add(item.Key);
                     }
                 }
@@ -91,7 +91,7 @@ namespace PlayHouseConnector.Network
         public void OnReply(ClientPacket clientPacket)
         {
             int msgSeq = clientPacket.MsgSeq;
-            int stageKey = clientPacket.Header.StageIndex;
+            long stageId = clientPacket.Header.StageId;
             ReplyObject? replyObject = Get(msgSeq) ;
 
             if (replyObject != null)
@@ -104,7 +104,7 @@ namespace PlayHouseConnector.Network
             else
             {
                 _log.Error(
-                    ()=>$"OnReply Already Removed - [errorCode:{clientPacket.Header.ErrorCode},msgSeq:{msgSeq},msgId{clientPacket.MsgId},stageKey:{stageKey}]");    
+                    ()=>$"OnReply Already Removed - [errorCode:{clientPacket.Header.ErrorCode},msgSeq:{msgSeq},msgId{clientPacket.MsgId},stageId:{stageId}]");    
             }
         }
     }

@@ -10,11 +10,11 @@ namespace PlayHouseConnector
     {
         public event Action<bool>? OnConnect; //result
         public event Action<ushort, IPacket>? OnReceive ; //(serviceId, packet) 
-        public event Action<ushort, int, IPacket>? OnReceiveEx; //(serviceId, stageKey, packet)
+        public event Action<ushort, long, IPacket>? OnReceiveEx; //(serviceId, stageId, packet)
         public event Action<ushort, IPacket, IPacket>? OnCommonReply; //(serviceId, request, reply)
-        public event Action<ushort, int, IPacket, IPacket>? OnCommonReplyEx;// (serviceId, stageKey, request, reply)
+        public event Action<ushort, long, IPacket, IPacket>? OnCommonReplyEx;// (serviceId, stageId, request, reply)
         public event Action<ushort, ushort, IPacket>? OnError; // (serviceId, errorCode, request)
-        public event Action<ushort, int, ushort, IPacket>? OnErrorEx; //(serviceId,stageKey,errorCode,request)
+        public event Action<ushort, long, ushort, IPacket>? OnErrorEx; //(serviceId,stageId,errorCode,request)
         public event Action? OnDisconnect;//
 
         public ConnectorConfig ConnectorConfig { get; private set; } = new();
@@ -95,17 +95,17 @@ namespace PlayHouseConnector
 
             _clientNetwork!.Send(serviceId, packet, 0);
         }
-        public void SendEx(ushort serviceId,int stageKey,IPacket packet)
+        public void SendEx(ushort serviceId,long stageId,IPacket packet)
         {
             if (IsConnect() == false)
             {
                 if (OnErrorEx != null)
                 {
-                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet);
+                    OnErrorEx(serviceId,stageId, (ushort)ConnectorErrorCode.DISCONNECTED, packet);
                 }
                 else
                 {
-                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
+                    throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.DISCONNECTED, packet, 0);
                 }
 
                 return;
@@ -115,16 +115,16 @@ namespace PlayHouseConnector
             {
                 if (OnErrorEx != null)
                 {
-                    OnErrorEx(serviceId,stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
+                    OnErrorEx(serviceId,stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
                 }
                 else
                 {
-                    throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
+                    throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet, 0);
                 }
                 return;
             }
 
-            _clientNetwork!.Send(serviceId, packet, stageKey);
+            _clientNetwork!.Send(serviceId, packet, stageId);
         }
 
         public void Authenticate(ushort serviceId, IPacket request, Action<IPacket> callback)
@@ -147,21 +147,21 @@ namespace PlayHouseConnector
 
             _clientNetwork!.Request(serviceId,request,callback,0);
         }
-        public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,int stageKey)
+        public void RequestEx(ushort serviceId, IPacket request, Action<IPacket> callback,long stageId)
         {
             if (IsConnect() == false)
             {
-                ErrorExCallback(serviceId,stageKey,(ushort)ConnectorErrorCode.DISCONNECTED, request);
+                ErrorExCallback(serviceId,stageId,(ushort)ConnectorErrorCode.DISCONNECTED, request);
                 return;
             }
 
             if (_clientNetwork!.IsAuthenticated() == false)
             {
-                ErrorExCallback(serviceId, stageKey,(ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
+                ErrorExCallback(serviceId, stageId,(ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
                 return;
             }
 
-            _clientNetwork!.Request(serviceId,request,callback,stageKey);
+            _clientNetwork!.Request(serviceId,request,callback,stageId);
         }
 
         public async Task<IPacket> AuthenticateAsync(ushort serviceId, IPacket request)
@@ -187,19 +187,19 @@ namespace PlayHouseConnector
 
             return await _clientNetwork!.RequestAsync(serviceId, request, 0);
         }
-        public async Task<IPacket> RequestExAsync(ushort serviceId, IPacket request,int stageKey)
+        public async Task<IPacket> RequestExAsync(ushort serviceId, long stageId, IPacket request)
         {
             if (IsConnect() == false)
             {
-                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+                throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
             }
             if (_clientNetwork!.IsAuthenticated() == false)
             {
-                throw new PlayConnectorException(serviceId, stageKey, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
+                throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
             }
 
 
-            return await _clientNetwork!.RequestAsync(serviceId, request, stageKey);
+            return await _clientNetwork!.RequestAsync(serviceId, request, stageId);
         }
 
         public bool IsAuthenticated()
@@ -224,11 +224,11 @@ namespace PlayHouseConnector
 
         }
 
-        public void ReceiveExCallback(ushort serviceId, int stageKey, IPacket packet)
+        public void ReceiveExCallback(ushort serviceId, long stageId, IPacket packet)
         {
             if (OnReceiveEx != null)
             {
-                OnReceiveEx.Invoke(serviceId, stageKey, packet);
+                OnReceiveEx.Invoke(serviceId, stageId, packet);
             }
             else
             {
@@ -244,12 +244,12 @@ namespace PlayHouseConnector
             }
         }
 
-        public void CommonReplyExCallback(ushort serviceId,int stageKey, IPacket request, IPacket reply)
+        public void CommonReplyExCallback(ushort serviceId,long stageId, IPacket request, IPacket reply)
         {
 
             if (OnCommonReplyEx != null)
             {
-                OnCommonReplyEx.Invoke(serviceId, stageKey, request, reply);
+                OnCommonReplyEx.Invoke(serviceId, stageId, request, reply);
             }
         }
 
@@ -264,11 +264,11 @@ namespace PlayHouseConnector
                 _log.Error(() => "OnError is not initialized");
             }
         }
-        public void ErrorExCallback(ushort serviceId,int stageKey, ushort errorCode, IPacket request)
+        public void ErrorExCallback(ushort serviceId,long stageId, ushort errorCode, IPacket request)
         {
             if (OnErrorEx != null)
             {
-                OnErrorEx.Invoke(serviceId, stageKey, errorCode, request);
+                OnErrorEx.Invoke(serviceId, stageId, errorCode, request);
             }
             else
             {

@@ -7,39 +7,36 @@ namespace PlayHouseConnector.Network
     public class TargetId
     {
         public ushort ServiceId { get; }
-        public int StageIndex { get; }
+        public long StageId { get; }
 
-        public TargetId(ushort serviceId, int stageIndex = 0)
+        public TargetId(ushort serviceId, long stageId = 0)
         {
-            if (stageIndex > byte.MaxValue)
-            {
-                throw new ArithmeticException("stageIndex overflow");
-            }
+            
             ServiceId = serviceId;
-            StageIndex = stageIndex;
+            StageId = stageId;
         }
     }
     public class Header
     {
         public ushort ServiceId { get; set; }
-        public int MsgId { get; set; }
+        public string MsgId { get; set; }
         public ushort MsgSeq { get; set; }
         public ushort ErrorCode { get; set; }
-        public byte StageIndex { get; set; }
+        public long StageId { get; set; }
 
         public  override string ToString()
         {
-            return $"ServiceId: {ServiceId}, MsgId: {MsgId}, MsgSeq: {MsgSeq}, ErrorCode: {ErrorCode}, StageIndex: {StageIndex}";
+            return $"ServiceId: {ServiceId}, MsgId: {MsgId}, MsgSeq: {MsgSeq}, ErrorCode: {ErrorCode}, StageId: {StageId}";
         }
 
 
-        public Header(ushort serviceId = 0, int msgId =0, ushort msgSeq = 0,ushort errorCode= 0, byte stageIndex = 0)
+        public Header(ushort serviceId = 0, string msgId = "", ushort msgSeq = 0,ushort errorCode= 0, long stageId = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
             MsgSeq = msgSeq;
             ServiceId = serviceId;
-            StageIndex = stageIndex;
+            StageId = stageId;
         }
     }
 
@@ -92,7 +89,7 @@ namespace PlayHouseConnector.Network
         }
 
         public int MsgSeq => Header.MsgSeq;
-        public int MsgId=> Header.MsgId;
+        public string MsgId=> Header.MsgId;
         public ushort ServiceId => Header.ServiceId;
 
         public IPacket ToPacket()
@@ -102,7 +99,7 @@ namespace PlayHouseConnector.Network
 
         internal static ClientPacket ToServerOf(TargetId targetId, IPacket packet)
         {
-            var header = new Header(serviceId: targetId.ServiceId, msgId: packet.MsgId, stageIndex: (byte)targetId.StageIndex);
+            var header = new Header(serviceId: targetId.ServiceId, msgId: packet.MsgId, stageId: targetId.StageId);
             return new ClientPacket(header, packet.Payload);
                                                             
         }
@@ -117,11 +114,31 @@ namespace PlayHouseConnector.Network
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder((ushort)bodySize));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
-            buffer.WriteInt32(XBitConverter.ToNetworkOrder(Header.MsgId));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
-            buffer.Write(Header.StageIndex);
+            int headerIdSize = Header.MsgId.Length;
+            if(headerIdSize > 256)
+            {
+                throw new Exception($"MsgId size is over : {headerIdSize}");
+            }
+            /*
+             *  2byte  header size
+             *  3byte  body size
+             *  2byte  serviceId
+             *  1byte  msgId size
+             *  n byte msgId string
+             *  2byte  msgSeq
+             *  8byte  stageId
+             *  
+             *  ToServer Header Size = 2+3+2+1+2+8+N = 18 + n
+             * */
+            int headerSize = 18 + headerIdSize;
+
+            buffer.WriteInt16((ushort)headerSize); //header size
+            buffer.WriteInt24(bodySize); // body size 3byte
+            buffer.WriteInt16(Header.ServiceId); // service id
+            buffer.Write((byte)headerIdSize); // msgId size
+            buffer.Write(Header.MsgId); // msgId string
+            buffer.WriteInt16(Header.MsgSeq); //msgseq
+            buffer.WriteInt64(Header.StageId);
 
             buffer.Write(Payload.DataSpan);
         }
@@ -133,7 +150,7 @@ namespace PlayHouseConnector.Network
 
         internal bool IsHeartBeat()
         {
-            return MsgId == -1;
+            return MsgId == "-1";
         }
     }
 }
