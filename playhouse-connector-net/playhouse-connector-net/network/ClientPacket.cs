@@ -68,6 +68,7 @@ namespace PlayHouseConnector.Network
     {
         public Header Header { get; set; }
         public IPayload Payload;
+        public long StageId => Header.StageId;
 
         public ClientPacket(Header header, IPayload payload)
         {

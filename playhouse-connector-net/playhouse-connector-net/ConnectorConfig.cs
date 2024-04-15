@@ -23,7 +23,7 @@ namespace PlayHouseConnector
 
             public bool UseWebsocket { get; set; } = false;
             public bool EnableLoggingResponseTime { get; set; } = false;
-            public bool UseExtendStage = false;
+            //public bool UseExtendStage = false;
             public string Host { get; set; } = String.Empty;
             public int Port { get; set; }  = 0;
     }

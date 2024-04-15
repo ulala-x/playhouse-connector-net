@@ -195,23 +195,23 @@ namespace PlayHouseConnector.Network
                             _isAuthenticate = true;
                         }
 
-                        if (_config.UseExtendStage)
-                        {
-                            _connectorCallback.CommonReplyExCallback(serviceId, stageId, request, reply);
-                        }
-                        else
-                        {
-                            _connectorCallback.CommonReplyCallback(serviceId, request, reply);
+                        //if (stageId > 0)
+                        //{
+                        //    _connectorCallback.CommonReplyExCallback(serviceId, stageId, request, reply);
+                        //}
+                        //else
+                        //{
+                        //    _connectorCallback.CommonReplyCallback(serviceId, request, reply);
 
-                        }
+                        //}
 
                         callback.Invoke(reply);
                     }
                     else
                     {
-                        if (_config.UseExtendStage)
+                        if (stageId > 0)
                         {
-                            _connectorCallback.ErrorExCallback(serviceId, stageId, errorCode, request);
+                            _connectorCallback.ErrorStageCallback(serviceId, stageId, errorCode, request);
                         }
                         else
                         {
@@ -314,15 +314,18 @@ namespace PlayHouseConnector.Network
                 }
                 else
                 {
-                    var targetId = new TargetId(clientPacket.ServiceId, clientPacket.Header.StageId);
+                    ushort serviceId = clientPacket.ServiceId;
+                    long stageId = clientPacket.StageId;
                     var packet = clientPacket.ToPacket();
-                    if (!_config.UseExtendStage)
+                    if (stageId > 0)
                     {
-                        _connectorCallback.ReceiveCallback(targetId.ServiceId,  packet);
+                        _connectorCallback.ReceiveStageCallback(serviceId, stageId, packet);
+                        
                     }
                     else
                     {
-                        _connectorCallback.ReceiveExCallback(targetId.ServiceId, targetId.StageId, packet);
+                        _connectorCallback.ReceiveCallback(serviceId, packet);
+
                     }
                 }
                 
