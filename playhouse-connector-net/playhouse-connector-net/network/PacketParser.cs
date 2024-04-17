@@ -9,8 +9,8 @@ namespace PlayHouseConnector.Network
 
     public sealed class PacketParser
     {
-        public const int MAX_PACKET_SIZE = 65535;
-        public const int HEADER_SIZE = 13;
+        public const int MAX_PACKET_SIZE = 2097152;
+        public const int HEADER_SIZE = 14;
         //public const int LENGTH_FIELD_SIZE = 3;
         private LOG<PacketParser> _log = new();
 
@@ -24,7 +24,7 @@ namespace PlayHouseConnector.Network
                 try
                 {
 
-                    int bodySize = XBitConverter.ToHostOrder(buffer.PeekInt16(buffer.ReaderIndex));
+                    int bodySize = XBitConverter.ToHostOrder(buffer.PeekInt32(buffer.ReaderIndex));
 
                     if (bodySize > MAX_PACKET_SIZE)
                     {
@@ -38,7 +38,7 @@ namespace PlayHouseConnector.Network
                         break;
                     }
 
-                    buffer.Clear(2);
+                    buffer.Clear(4);
 
                     ushort serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
                     int msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
