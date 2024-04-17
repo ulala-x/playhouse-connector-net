@@ -19,7 +19,7 @@ namespace PlayHouseConnector.Network
     public class Header
     {
         public ushort ServiceId { get; set; }
-        public string MsgId { get; set; }
+        public int MsgId { get; set; }
         public ushort MsgSeq { get; set; }
         public ushort ErrorCode { get; set; }
         public long StageId { get; set; }
@@ -30,7 +30,7 @@ namespace PlayHouseConnector.Network
         }
 
 
-        public Header(ushort serviceId = 0, string msgId = "", ushort msgSeq = 0,ushort errorCode= 0, long stageId = 0)
+        public Header(ushort serviceId = 0, int msgId = 0, ushort msgSeq = 0,ushort errorCode= 0, long stageId = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
@@ -90,7 +90,7 @@ namespace PlayHouseConnector.Network
         }
 
         public int MsgSeq => Header.MsgSeq;
-        public string MsgId=> Header.MsgId;
+        public int MsgId=> Header.MsgId;
         public ushort ServiceId => Header.ServiceId;
 
         public IPacket ToPacket()
@@ -115,34 +115,54 @@ namespace PlayHouseConnector.Network
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            int headerIdSize = Header.MsgId.Length;
-            if(headerIdSize > 256)
-            {
-                throw new Exception($"MsgId size is over : {headerIdSize}");
-            }
-            /*
-             *  2byte  header size
-             *  3byte  body size
-             *  2byte  serviceId
-             *  1byte  msgId size
-             *  n byte msgId string
-             *  2byte  msgSeq
-             *  8byte  stageId
-             *  
-             *  ToServer Header Size = 2+3+2+1+2+8+N = 18 + n
-             * */
-            int headerSize = 18 + headerIdSize;
-
-            buffer.WriteInt16((ushort)headerSize); //header size
-            buffer.WriteInt24(bodySize); // body size 3byte
-            buffer.WriteInt16(Header.ServiceId); // service id
-            buffer.Write((byte)headerIdSize); // msgId size
-            buffer.Write(Header.MsgId); // msgId string
-            buffer.WriteInt16(Header.MsgSeq); //msgseq
-            buffer.WriteInt64(Header.StageId);
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder((ushort)bodySize));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
+            buffer.WriteInt32(XBitConverter.ToNetworkOrder(Header.MsgId));
+            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
+            buffer.WriteInt64(XBitConverter.ToNetworkOrder(Header.StageId));
 
             buffer.Write(Payload.DataSpan);
         }
+
+
+        //internal void GetBytes(PooledByteBuffer buffer)
+        //{
+        //    var body = Payload.Data;
+        //    int bodySize = body.Length;
+
+        //    if (bodySize > PacketParser.MAX_PACKET_SIZE)
+        //    {
+        //        throw new Exception($"body size is over : {bodySize}");
+        //    }
+
+        //    int headerIdSize = Header.MsgId.Length;
+        //    if(headerIdSize > 256)
+        //    {
+        //        throw new Exception($"MsgId size is over : {headerIdSize}");
+        //    }
+        //    /*
+        //     *  2byte  header size
+        //     *  3byte  body size
+        //     *  2byte  serviceId
+        //     *  1byte  msgId size
+        //     *  n byte msgId string
+        //     *  2byte  msgSeq
+        //     *  8byte  stageId
+        //     *  
+        //     *  ToServer Header Size = 2+3+2+1+2+8+N = 18 + n
+        //     * */
+        //    int headerSize = 18 + headerIdSize;
+
+        //    buffer.WriteInt16((ushort)headerSize); //header size
+        //    buffer.WriteInt24(bodySize); // body size 3byte
+        //    buffer.WriteInt16(Header.ServiceId); // service id
+        //    buffer.Write((byte)headerIdSize); // msgId size
+        //    buffer.Write(Header.MsgId); // msgId string
+        //    buffer.WriteInt16(Header.MsgSeq); //msgseq
+        //    buffer.WriteInt64(Header.StageId);
+
+        //    buffer.Write(Payload.DataSpan);
+        //}
 
         internal void SetMsgSeq(ushort seq)
         {
@@ -151,7 +171,7 @@ namespace PlayHouseConnector.Network
 
         internal bool IsHeartBeat()
         {
-            return MsgId == "-1";
+            return MsgId == -1;
         }
     }
 }

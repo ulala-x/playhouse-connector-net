@@ -95,7 +95,7 @@ namespace PlayHouseConnector.Network
 
             if(GetElapedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
             {
-                Packet packet = new Packet("-1");
+                Packet packet = new Packet(-1);
                 Send(0, packet, 0);
                 UpdateTime(ref _lastSendHeartBeatTime);
             }
@@ -104,7 +104,7 @@ namespace PlayHouseConnector.Network
 
         private void SendDebugMode()
         {
-            Packet packet = new Packet("-2");
+            Packet packet = new Packet(-2);
             Send(0, packet, 0);
         }
         internal void Connect(bool debugMode)
