@@ -14,6 +14,7 @@ namespace PlayHouseConnector.Network
         private readonly IClient _client;
         private readonly ConnectorConfig _config;
         private readonly IConnectorCallback _connectorCallback;
+        private readonly LOG<ClientNetwork> _log = new();
         private readonly RequestCache _requestCache;
         private readonly Stopwatch _stopwatch = new();
         private bool _connectChecker;
@@ -21,7 +22,6 @@ namespace PlayHouseConnector.Network
         private bool _isAuthenticate;
         private DateTime _lastReceivedTime = DateTime.Now;
         private DateTime _lastSendHeartBeatTime = DateTime.Now;
-        private readonly LOG<ClientNetwork> _log = new();
         private TaskCompletionSource<bool>? _taskOnConnector;
 
         private Timer _timer;

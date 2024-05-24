@@ -32,10 +32,10 @@ namespace PlayHouseConnector.Network
 
     public class RequestCache
     {
-        private readonly AtomicShort _sequence = new();
         private readonly ConcurrentDictionary<int, ReplyObject> _cache = new();
 
         private readonly LOG<RequestCache> _log = new();
+        private readonly AtomicShort _sequence = new();
         private readonly int _timeoutMs;
 
         public RequestCache(int timeout)

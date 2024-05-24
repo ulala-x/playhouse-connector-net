@@ -9,11 +9,11 @@ namespace PlayHouseConnector.Network
     internal class TcpClient : NetCoreServer.TcpClient, IClient
     {
         private readonly ClientNetwork _clientNetwork;
+        private readonly LOG<TcpClient> _log = new();
         private readonly PacketParser _packetParser = new();
         private readonly RingBuffer _recvBuffer = new(1024 * 1024);
         private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024);
         private readonly RingBufferStream _stream;
-        private readonly LOG<TcpClient> _log = new();
         private bool _stop;
 
         public TcpClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)

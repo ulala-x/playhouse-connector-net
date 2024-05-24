@@ -8,8 +8,8 @@ namespace PlayHouseConnector
 {
     public class Connector : IConnectorCallback
     {
-        private ClientNetwork? _clientNetwork;
         private readonly LOG<Connector> _log = new();
+        private ClientNetwork? _clientNetwork;
 
         public ConnectorConfig ConnectorConfig { get; private set; } = new();
 
