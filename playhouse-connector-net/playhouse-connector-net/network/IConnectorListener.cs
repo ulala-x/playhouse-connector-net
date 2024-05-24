@@ -5,6 +5,5 @@
         void OnConnected();
         void OnReceive(ClientPacket clientPacket);
         void OnDisconnected();
-        
     }
 }

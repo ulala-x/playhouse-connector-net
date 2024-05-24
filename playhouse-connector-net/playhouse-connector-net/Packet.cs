@@ -1,6 +1,5 @@
-﻿using Google.Protobuf;
-using System;
-using System.IO;
+﻿using System;
+using Google.Protobuf;
 
 namespace PlayHouseConnector
 {
@@ -14,36 +13,31 @@ namespace PlayHouseConnector
         public IPayload Payload { get; }
         public ReadOnlyMemory<byte> Data { get; }
         public ReadOnlySpan<byte> DataSpan => Data.Span;
-
     }
 
     //
     public class Packet : IPacket
     {
-        private int _msgId;
-        private readonly IPayload _payload;
-        
-        public IPayload Payload => _payload;
-
-        public int MsgId => _msgId;
-
-        public ReadOnlyMemory<byte> Data => _payload.Data;
-        
-
         public Packet(int msgId = 0)
         {
-            _msgId = msgId;
-            _payload = new EmptyPayload();
+            MsgId = msgId;
+            Payload = new EmptyPayload();
         }
 
         public Packet(int msgId, IPayload payload) : this(msgId)
         {
-            _payload = payload;
+            Payload = payload;
         }
 
         public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message))
         {
         }
+
+        public IPayload Payload { get; }
+
+        public int MsgId { get; }
+
+        public ReadOnlyMemory<byte> Data => Payload.Data;
 
 
         public void Dispose()

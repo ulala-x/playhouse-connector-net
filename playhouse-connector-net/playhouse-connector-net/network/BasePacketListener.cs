@@ -4,6 +4,5 @@
     {
         void OnConnect();
         void OnDisconnected();
-
     }
 }

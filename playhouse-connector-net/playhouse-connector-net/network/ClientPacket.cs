@@ -1,42 +1,42 @@
-﻿using CommonLib;
+﻿using System;
+using CommonLib;
 using PlayHouse;
-using System;
 
 namespace PlayHouseConnector.Network
 {
     public class TargetId
     {
-        public ushort ServiceId { get; }
-        public long StageId { get; }
-
         public TargetId(ushort serviceId, long stageId = 0)
         {
-            
             ServiceId = serviceId;
             StageId = stageId;
         }
+
+        public ushort ServiceId { get; }
+        public long StageId { get; }
     }
+
     public class Header
     {
-        public ushort ServiceId { get; set; }
-        public int MsgId { get; set; }
-        public ushort MsgSeq { get; set; }
-        public ushort ErrorCode { get; set; }
-        public long StageId { get; set; }
-
-        public  override string ToString()
-        {
-            return $"ServiceId: {ServiceId}, MsgId: {MsgId}, MsgSeq: {MsgSeq}, ErrorCode: {ErrorCode}, StageId: {StageId}";
-        }
-
-
-        public Header(ushort serviceId = 0, int msgId = 0, ushort msgSeq = 0,ushort errorCode= 0, long stageId = 0)
+        public Header(ushort serviceId = 0, int msgId = 0, ushort msgSeq = 0, ushort errorCode = 0, long stageId = 0)
         {
             MsgId = msgId;
             ErrorCode = errorCode;
             MsgSeq = msgSeq;
             ServiceId = serviceId;
             StageId = stageId;
+        }
+
+        public ushort ServiceId { get; set; }
+        public int MsgId { get; set; }
+        public ushort MsgSeq { get; set; }
+        public ushort ErrorCode { get; set; }
+        public long StageId { get; set; }
+
+        public override string ToString()
+        {
+            return
+                $"ServiceId: {ServiceId}, MsgId: {MsgId}, MsgSeq: {MsgSeq}, ErrorCode: {ErrorCode}, StageId: {StageId}";
         }
     }
 
@@ -55,20 +55,18 @@ namespace PlayHouseConnector.Network
             _buffer.Dispose();
         }
 
+        public ReadOnlyMemory<byte> Data => _buffer.AsMemory();
+
         public PooledByteBuffer GetBuffer()
         {
             return _buffer;
         }
-
-        public ReadOnlyMemory<byte> Data => _buffer.AsMemory();
     }
 
 
     public class ClientPacket : IBasePacket
     {
-        public Header Header { get; set; }
         public IPayload Payload;
-        public long StageId => Header.StageId;
 
         public ClientPacket(Header header, IPayload payload)
         {
@@ -76,22 +74,24 @@ namespace PlayHouseConnector.Network
             Payload = payload;
         }
 
+        public Header Header { get; set; }
+        public long StageId => Header.StageId;
+
+        public int MsgSeq => Header.MsgSeq;
+        public int MsgId => Header.MsgId;
+        public ushort ServiceId => Header.ServiceId;
+
         public void Dispose()
         {
             Payload.Dispose();
-
         }
 
         public IPayload MovePayload()
         {
-            IPayload temp = Payload;
+            var temp = Payload;
             Payload = new EmptyPayload();
             return temp;
         }
-
-        public int MsgSeq => Header.MsgSeq;
-        public int MsgId=> Header.MsgId;
-        public ushort ServiceId => Header.ServiceId;
 
         public IPacket ToPacket()
         {
@@ -100,15 +100,14 @@ namespace PlayHouseConnector.Network
 
         internal static ClientPacket ToServerOf(TargetId targetId, IPacket packet)
         {
-            var header = new Header(serviceId: targetId.ServiceId, msgId: packet.MsgId, stageId: targetId.StageId);
+            var header = new Header(targetId.ServiceId, packet.MsgId, stageId: targetId.StageId);
             return new ClientPacket(header, packet.Payload);
-                                                            
         }
 
         internal void GetBytes(PooledByteBuffer buffer)
         {
             var body = Payload.Data;
-            int bodySize = body.Length;
+            var bodySize = body.Length;
 
             if (bodySize > PacketParser.MAX_PACKET_SIZE)
             {
@@ -175,5 +174,3 @@ namespace PlayHouseConnector.Network
         }
     }
 }
-
-

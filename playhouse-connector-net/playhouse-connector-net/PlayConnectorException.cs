@@ -2,17 +2,11 @@
 
 namespace PlayHouseConnector
 {
-
     public class PlayConnectorException : Exception
     {
-        public ushort ServiceId  { get; private set; }
-        public long StageId  { get; private set; }
-        public IPacket Request { get; private set; }
-        public ushort ErrorCode { get; private set; }
-        
-
-        public PlayConnectorException(ushort serviceId,long stageId,ushort errorCode, IPacket request,ushort msgSeq)
-            : base($"An error occurred - [serviceId:{serviceId},stageId:{stageId},errorCode:{errorCode},req msgId:{request.MsgId},msgSeq:{msgSeq}]")
+        public PlayConnectorException(ushort serviceId, long stageId, ushort errorCode, IPacket request, ushort msgSeq)
+            : base(
+                $"An error occurred - [serviceId:{serviceId},stageId:{stageId},errorCode:{errorCode},req msgId:{request.MsgId},msgSeq:{msgSeq}]")
         {
             ServiceId = serviceId;
             StageId = stageId;
@@ -20,7 +14,7 @@ namespace PlayHouseConnector
             Request = request;
         }
 
-        public PlayConnectorException(ushort serviceId,long stageId,ushort errorCode, string message, IPacket request)
+        public PlayConnectorException(ushort serviceId, long stageId, ushort errorCode, string message, IPacket request)
             : base(message)
         {
             ServiceId = serviceId;
@@ -29,7 +23,8 @@ namespace PlayHouseConnector
             Request = request;
         }
 
-        public PlayConnectorException(ushort serviceId,long stageId,ushort errorCode, string message, Exception innerException, IPacket request)
+        public PlayConnectorException(ushort serviceId, long stageId, ushort errorCode, string message,
+            Exception innerException, IPacket request)
             : base(message, innerException)
         {
             ServiceId = serviceId;
@@ -37,6 +32,10 @@ namespace PlayHouseConnector
             ErrorCode = errorCode;
             Request = request;
         }
-    }
 
+        public ushort ServiceId { get; private set; }
+        public long StageId { get; private set; }
+        public IPacket Request { get; private set; }
+        public ushort ErrorCode { get; private set; }
+    }
 }

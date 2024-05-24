@@ -5,10 +5,11 @@ using Google.Protobuf;
 namespace PlayHouseConnector
 {
     public interface IPayload : IDisposable
-    {   
+    {
         ReadOnlyMemory<byte> Data { get; }
         ReadOnlySpan<byte> DataSpan => Data.Span;
     }
+
     public class ProtoPayload : IPayload
     {
         private readonly IMessage _proto;
@@ -17,24 +18,24 @@ namespace PlayHouseConnector
         {
             _proto = proto;
         }
+
         public void Dispose()
         {
         }
 
-        public ReadOnlyMemory<byte> Data => (_proto.ToByteArray());
+        public ReadOnlyMemory<byte> Data => _proto.ToByteArray();
     }
 
     public class EmptyPayload : IPayload
     {
-        public void Output(Stream outputStream)
-        {
-        }
         public void Dispose()
         {
         }
-        public ReadOnlyMemory<byte> Data => new ReadOnlyMemory<byte>();
+
+        public ReadOnlyMemory<byte> Data => new();
+
+        public void Output(Stream outputStream)
+        {
+        }
     }
-
-  
-
 }

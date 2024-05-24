@@ -1,30 +1,29 @@
-﻿using CommonLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using PlayHouse.Utils;
+using CommonLib;
 using PlayHouse;
+using PlayHouse.Utils;
 
 namespace PlayHouseConnector.Network
 {
-
     public sealed class PacketParser
     {
         public const int MAX_PACKET_SIZE = 2097152;
+
         public const int HEADER_SIZE = 14;
+
         //public const int LENGTH_FIELD_SIZE = 3;
-        private LOG<PacketParser> _log = new();
+        private readonly LOG<PacketParser> _log = new();
 
         public List<ClientPacket> Parse(RingBuffer buffer)
         {
-
             var packets = new List<ClientPacket>();
 
             while (buffer.Count >= HEADER_SIZE)
             {
                 try
                 {
-
-                    int bodySize = XBitConverter.ToHostOrder(buffer.PeekInt32(buffer.ReaderIndex));
+                    var bodySize = XBitConverter.ToHostOrder(buffer.PeekInt32(buffer.ReaderIndex));
 
                     if (bodySize > MAX_PACKET_SIZE)
                     {
@@ -40,20 +39,20 @@ namespace PlayHouseConnector.Network
 
                     buffer.Clear(4);
 
-                    ushort serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    int msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
-                    ushort msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    long stageId = XBitConverter.ToHostOrder(buffer.ReadInt64());
-                    ushort errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    var serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    var msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
+                    var msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    var stageId = XBitConverter.ToHostOrder(buffer.ReadInt64());
+                    var errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
 
 
                     var body = new PooledByteBuffer(bodySize);
 
                     buffer.Read(body, bodySize);
 
-                    var clientPacket = new ClientPacket(new Header(serviceId, msgId, msgSeq, errorCode, stageId), new PooledByteBufferPayload(body));
+                    var clientPacket = new ClientPacket(new Header(serviceId, msgId, msgSeq, errorCode, stageId),
+                        new PooledByteBufferPayload(body));
                     packets.Add(clientPacket);
-
                 }
                 catch (Exception ex)
                 {
@@ -65,17 +64,17 @@ namespace PlayHouseConnector.Network
         }
     }
 
-        /*
-         *  2byte  header size
-         *  3byte  body size
-         *  2byte  serviceId
-         *  1byte  msgId size
-         *  n byte msgId string
-         *  2byte  msgSeq
-         *  8byte  stageId
-         *  2byte  errorCode
-         *  From Header Size = 2+3+2+1+2+8+2+N = 20 + n
-         * */
+    /*
+     *  2byte  header size
+     *  3byte  body size
+     *  2byte  serviceId
+     *  1byte  msgId size
+     *  n byte msgId string
+     *  2byte  msgSeq
+     *  8byte  stageId
+     *  2byte  errorCode
+     *  From Header Size = 2+3+2+1+2+8+2+N = 20 + n
+     * */
 
     //    public sealed class PacketParser
     //{
@@ -86,9 +85,9 @@ namespace PlayHouseConnector.Network
 
     //    public List<ClientPacket> Parse(RingBuffer buffer)
     //    {
-            
+
     //        var packets = new List<ClientPacket>();
-                        
+
     //        while (buffer.Count >= MIN_SIZE)
     //        {
     //            try {
@@ -117,7 +116,7 @@ namespace PlayHouseConnector.Network
     //                ushort msgSeq = buffer.ReadInt16();
     //                long stageId = buffer.ReadInt64();
     //                ushort errorCode = buffer.ReadInt16();
-                    
+
     //                var body = new PooledByteBuffer(bodySize);
 
     //                buffer.Read(body,bodySize);

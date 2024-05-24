@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Threading;
 
 // ReSharper disable once CheckNamespace
 namespace PlayHouseConnector.Network
 {
     public class AsyncManager
     {
-        private readonly ConcurrentQueue<Action> _mainThreadActions  = new();
+        private readonly ConcurrentQueue<Action> _mainThreadActions = new();
+
         public void AddJob(Action action)
         {
             _mainThreadActions.Enqueue(action);
         }
+
         public IEnumerator MainCoroutineAction()
         {
             while (_mainThreadActions.TryDequeue(out var action))
-            {   
+            {
                 action.Invoke();
             }
+
             yield return null;
         }
 
