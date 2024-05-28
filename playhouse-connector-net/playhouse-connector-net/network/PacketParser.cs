@@ -23,7 +23,7 @@ namespace PlayHouseConnector.Network
             {
                 try
                 {
-                    var bodySize = XBitConverter.ToHostOrder(buffer.PeekInt32(buffer.ReaderIndex));
+                    var bodySize = buffer.PeekInt32(buffer.ReaderIndex);
 
                     if (bodySize > MAX_PACKET_SIZE)
                     {
@@ -39,11 +39,11 @@ namespace PlayHouseConnector.Network
 
                     buffer.Clear(4);
 
-                    var serviceId = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    var msgId = XBitConverter.ToHostOrder(buffer.ReadInt32());
-                    var msgSeq = XBitConverter.ToHostOrder(buffer.ReadInt16());
-                    var stageId = XBitConverter.ToHostOrder(buffer.ReadInt64());
-                    var errorCode = XBitConverter.ToHostOrder(buffer.ReadInt16());
+                    var serviceId = buffer.ReadInt16();
+                    var msgId = buffer.ReadInt32();
+                    var msgSeq = buffer.ReadInt16();
+                    var stageId = buffer.ReadInt64();
+                    var errorCode = buffer.ReadInt16();
 
 
                     var body = new PooledByteBuffer(bodySize);

@@ -114,11 +114,11 @@ namespace PlayHouseConnector.Network
                 throw new Exception($"body size is over : {bodySize}");
             }
 
-            buffer.WriteInt32(XBitConverter.ToNetworkOrder(bodySize));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.ServiceId));
-            buffer.WriteInt32(XBitConverter.ToNetworkOrder(Header.MsgId));
-            buffer.WriteInt16(XBitConverter.ToNetworkOrder(Header.MsgSeq));
-            buffer.WriteInt64(XBitConverter.ToNetworkOrder(Header.StageId));
+            buffer.WriteInt32(bodySize);
+            buffer.WriteInt16(Header.ServiceId);
+            buffer.WriteInt32(Header.MsgId);
+            buffer.WriteInt16(Header.MsgSeq);
+            buffer.WriteInt64(Header.StageId);
 
             buffer.Write(Payload.DataSpan);
         }
