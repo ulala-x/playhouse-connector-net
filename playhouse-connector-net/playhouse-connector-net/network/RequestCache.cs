@@ -8,7 +8,7 @@ namespace PlayHouseConnector.Network
     public class ReplyObject
     {
         private readonly Action<ushort, IPacket>? _replyCallback;
-        public DateTime _time = DateTime.Now;
+        private readonly DateTime _time = DateTime.Now;
 
         public ReplyObject(int msgSeq, Action<ushort, IPacket>? callback = null)
         {
@@ -53,7 +53,7 @@ namespace PlayHouseConnector.Network
                 {
                     if (item.Value.IsExpired(_timeoutMs))
                     {
-                        item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(-3));
+                        item.Value.OnReceive((ushort)ConnectorErrorCode.REQUEST_TIMEOUT, new Packet(PacketConst.Timeout));
                         keysToDelete.Add(item.Key);
                     }
                 }
@@ -77,12 +77,7 @@ namespace PlayHouseConnector.Network
 
         public ReplyObject? Get(int seq)
         {
-            if (_cache.TryGetValue(seq, out var replyObject))
-            {
-                return replyObject;
-            }
-
-            return null;
+            return _cache.GetValueOrDefault(seq);
         }
 
         private void Remove(int seq)

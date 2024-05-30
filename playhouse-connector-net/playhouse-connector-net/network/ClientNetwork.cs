@@ -133,7 +133,7 @@ namespace PlayHouseConnector.Network
                 return false;
             }
 
-            return GetElapedTime(_lastReceivedTime) > _config.ConnectionIdleTimeoutMs;
+            return GetElapsedTime(_lastReceivedTime) > _config.ConnectionIdleTimeoutMs;
         }
 
         private static void TimerCallback(object? o)
@@ -161,7 +161,7 @@ namespace PlayHouseConnector.Network
             time = DateTime.Now;
         }
 
-        private long GetElapedTime(DateTime time)
+        private long GetElapsedTime(DateTime time)
         {
             var timeDifference = DateTime.Now - _lastReceivedTime;
             return (long)timeDifference.TotalMilliseconds;
@@ -174,9 +174,9 @@ namespace PlayHouseConnector.Network
                 return;
             }
 
-            if (GetElapedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
+            if (GetElapsedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
             {
-                var packet = new Packet(-1);
+                var packet = new Packet(PacketConst.HeartBeat);
                 Send(0, packet, 0);
                 UpdateTime(ref _lastSendHeartBeatTime);
             }
@@ -184,7 +184,7 @@ namespace PlayHouseConnector.Network
 
         private void SendDebugMode()
         {
-            var packet = new Packet(-2);
+            var packet = new Packet(PacketConst.Debug);
             Send(0, packet, 0);
         }
 
@@ -304,7 +304,7 @@ namespace PlayHouseConnector.Network
         }
 
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request, long stageId,
-            bool forAthenticate = false)
+            bool forAuthenticate = false)
         {
             var seq = (ushort)_requestCache.GetSequence();
 
@@ -314,7 +314,7 @@ namespace PlayHouseConnector.Network
             {
                 if (errorCode == 0)
                 {
-                    if (forAthenticate)
+                    if (forAuthenticate)
                     {
                         _isAuthenticate = true;
                     }

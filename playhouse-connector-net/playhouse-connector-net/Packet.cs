@@ -9,7 +9,7 @@ namespace PlayHouseConnector
 
     public interface IPacket : IBasePacket
     {
-        public int MsgId { get; }
+        public string MsgId { get; }
         public IPayload Payload { get; }
         public ReadOnlyMemory<byte> Data { get; }
         public ReadOnlySpan<byte> DataSpan => Data.Span;
@@ -18,24 +18,24 @@ namespace PlayHouseConnector
     //
     public class Packet : IPacket
     {
-        public Packet(int msgId = 0)
+        public Packet(string msgId = "")
         {
             MsgId = msgId;
             Payload = new EmptyPayload();
         }
 
-        public Packet(int msgId, IPayload payload) : this(msgId)
+        public Packet(string msgId, IPayload payload) : this(msgId)
         {
             Payload = payload;
         }
 
-        public Packet(IMessage message) : this(message.Descriptor.Index, new ProtoPayload(message))
+        public Packet(IMessage message) : this(message.Descriptor.Name, new ProtoPayload(message))
         {
         }
 
         public IPayload Payload { get; }
 
-        public int MsgId { get; }
+        public string MsgId { get; }
 
         public ReadOnlyMemory<byte> Data => Payload.Data;
 
