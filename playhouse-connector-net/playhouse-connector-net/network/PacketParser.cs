@@ -108,8 +108,8 @@ namespace PlayHouseConnector.Network
                     buffer.Clear(4);
 
                     var serviceId = buffer.ReadInt16();
-                    var sizeOfMsgName = buffer.ReadByte();
-                    var msgName = buffer.ReadString(sizeOfMsgName);
+                    var sizeOfMsgId = buffer.ReadByte();
+                    var msgName = buffer.ReadString(sizeOfMsgId);
 
                     var msgSeq = buffer.ReadInt16();
                     var stageId = buffer.ReadInt64();
