@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,11 +21,11 @@ namespace PlayHouseConnector.Network
         private bool _connectChecker;
         private bool _debugMode;
         private bool _isAuthenticate;
-        private DateTime _lastReceivedTime = DateTime.Now;
-        private DateTime _lastSendHeartBeatTime = DateTime.Now;
+        private readonly Stopwatch _lastReceivedTime = new();
+        private readonly Stopwatch _lastSendHeartBeatTime = new();
         private TaskCompletionSource<bool>? _taskOnConnector;
 
-        private Timer _timer;
+        //private Timer _timer;
 
 
         public ClientNetwork(ConnectorConfig config, IConnectorCallback connectorCallback)
@@ -43,7 +44,8 @@ namespace PlayHouseConnector.Network
                 _client = new TcpClient(_config.Host, _config.Port, this);
             }
 
-            _timer = new Timer(TimerCallback, this, 100, 100);
+            //_timer = new Timer(TimerCallback, this, 100, 100);
+            _lastSendHeartBeatTime.Start();
         }
 
         public void OnConnected()
@@ -55,8 +57,9 @@ namespace PlayHouseConnector.Network
                 SendDebugMode();
             }
 
-            UpdateTime(ref _lastReceivedTime);
-
+            //UpdateTime(ref _lastReceivedTime);
+            _lastReceivedTime.Restart();
+            _lastSendHeartBeatTime.Restart();
 
             _asyncManager.AddJob(() =>
             {
@@ -76,7 +79,7 @@ namespace PlayHouseConnector.Network
 
         public void OnReceive(ClientPacket clientPacket)
         {
-            UpdateTime(ref _lastReceivedTime);
+             _lastReceivedTime.Restart();
 
             if (clientPacket.IsHeartBeat())
             {
@@ -124,6 +127,7 @@ namespace PlayHouseConnector.Network
 
                 _taskOnConnector = null;
             });
+            _requestCache.Clear();
         }
 
         private bool IsIdleState()
@@ -133,39 +137,39 @@ namespace PlayHouseConnector.Network
                 return false;
             }
 
-            return GetElapsedTime(_lastReceivedTime) > _config.ConnectionIdleTimeoutMs;
+            return _lastReceivedTime.ElapsedMilliseconds > _config.ConnectionIdleTimeoutMs;
         }
 
-        private static void TimerCallback(object? o)
+        private void UpdateClientConnection()
         {
-            var network = (ClientNetwork)o!;
-            if (network._client.IsClientConnected())
+            //var network = (ClientNetwork)o!;
+            if (_client.IsClientConnected())
             {
-                if (network._debugMode == false)
+                if (_debugMode == false)
                 {
-                    network._requestCache.CheckExpire();
+                    _requestCache.CheckExpire();
                 }
 
-                network.SendHeartBeat();
+                SendHeartBeat();
 
-                if (network.IsIdleState())
+                if (IsIdleState())
                 {
-                    network._log.Debug(() => "Client disconnect cause idle time");
-                    network.Disconnect();
+                    _log.Debug(() => "Client disconnect cause idle time");
+                    Disconnect();
                 }
             }
         }
 
-        private void UpdateTime(ref DateTime time)
-        {
-            time = DateTime.Now;
-        }
+        //private void UpdateTime(ref DateTime time)
+        //{
+        //    time = DateTime.Now;
+        //}
 
-        private long GetElapsedTime(DateTime time)
-        {
-            var timeDifference = DateTime.Now - _lastReceivedTime;
-            return (long)timeDifference.TotalMilliseconds;
-        }
+        //private long GetElapsedTime(DateTime lastTime)
+        //{
+        //    var timeDifference = DateTime.UtcNow - lastTime;
+        //    return (long)timeDifference.TotalMilliseconds;
+        //}
 
         private void SendHeartBeat()
         {
@@ -174,11 +178,11 @@ namespace PlayHouseConnector.Network
                 return;
             }
 
-            if (GetElapsedTime(_lastSendHeartBeatTime) > _config.HeartBeatIntervalMs)
+            if (_lastSendHeartBeatTime.ElapsedMilliseconds > _config.HeartBeatIntervalMs)
             {
                 var packet = new Packet(PacketConst.HeartBeat);
                 Send(0, packet, 0);
-                UpdateTime(ref _lastSendHeartBeatTime);
+                _lastSendHeartBeatTime.Restart();
             }
         }
 
@@ -344,11 +348,14 @@ namespace PlayHouseConnector.Network
 
         public void MainThreadAction()
         {
+            UpdateClientConnection();
             _asyncManager.MainThreadAction();
         }
 
         public IEnumerator MainCoroutineAction()
         {
+            UpdateClientConnection();
+
             return _asyncManager.MainCoroutineAction();
         }
 

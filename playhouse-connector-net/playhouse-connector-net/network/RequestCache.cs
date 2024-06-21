@@ -105,5 +105,10 @@ namespace PlayHouseConnector.Network
                         $"OnReply Already Removed - [errorCode:{clientPacket.Header.ErrorCode},msgSeq:{msgSeq},msgId{clientPacket.MsgId},stageId:{stageId}]");
             }
         }
+
+        public void Clear()
+        {
+            _cache.Clear();
+        }
     }
 }
