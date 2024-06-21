@@ -132,7 +132,7 @@ namespace PlayHouseConnector.Network
 
         private bool IsIdleState()
         {
-            if (_isAuthenticate == false || _config.ConnectionIdleTimeoutMs == 0 || _debugMode)
+            if (_isAuthenticate == false || _config.ConnectionIdleTimeoutMs == 0)
             {
                 return false;
             }
@@ -148,14 +148,13 @@ namespace PlayHouseConnector.Network
                 if (_debugMode == false)
                 {
                     _requestCache.CheckExpire();
-                }
+                    SendHeartBeat();
 
-                SendHeartBeat();
-
-                if (IsIdleState())
-                {
-                    _log.Debug(() => "Client disconnect cause idle time");
-                    Disconnect();
+                    if (IsIdleState())
+                    {
+                        _log.Debug(() => "Client disconnect cause idle time");
+                        Disconnect();
+                    }
                 }
             }
         }
