@@ -10,6 +10,7 @@ namespace PlayHouseConnector
     {
         private readonly LOG<Connector> _log = new();
         private ClientNetwork? _clientNetwork;
+        private bool _disconnectFromClient;
 
         public ConnectorConfig ConnectorConfig { get; private set; } = new();
 
@@ -85,6 +86,11 @@ namespace PlayHouseConnector
 
         public void DisconnectCallback()
         {
+            if (_disconnectFromClient)
+            {
+                return;
+            }
+
             if (OnDisconnect != null)
             {
                 OnDisconnect.Invoke();
@@ -125,6 +131,7 @@ namespace PlayHouseConnector
 
         public void Connect(bool debugMode = false)
         {
+            _disconnectFromClient = false;
             _clientNetwork!.Connect(debugMode);
         }
 
@@ -140,6 +147,7 @@ namespace PlayHouseConnector
 
         public void Disconnect()
         {
+            _disconnectFromClient = true;
             _clientNetwork!.DisconnectAsync();
         }
 
