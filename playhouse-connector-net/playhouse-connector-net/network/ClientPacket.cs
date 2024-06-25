@@ -155,7 +155,7 @@ namespace PlayHouseConnector.Network
 
             buffer.WriteInt32(bodySize); // body size 4byte
             buffer.WriteInt16(Header.ServiceId); // service id
-            buffer.Write((byte)msgIdLength); // msgId size
+            //buffer.Write((byte)msgIdLength); // msgId size
             buffer.Write(Header.MsgId); // msgId string
             buffer.WriteInt16(Header.MsgSeq); //msgseq
             buffer.WriteInt64(Header.StageId);

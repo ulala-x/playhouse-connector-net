@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Data;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +24,8 @@ namespace PlayHouseConnector.Network
         private readonly Stopwatch _lastReceivedTime = new();
         private readonly Stopwatch _lastSendHeartBeatTime = new();
         private TaskCompletionSource<bool>? _taskOnConnector;
+        private readonly ConcurrentQueue<ClientPacket> _sendQueue =new();
+        private readonly AtomicBoolean _isSending = new(false);
 
         //private Timer _timer;
 
@@ -227,9 +229,16 @@ namespace PlayHouseConnector.Network
 
         private void _Send(ClientPacket packet)
         {
-            using (packet)
+
+            _sendQueue.Enqueue(packet);
+            if (_isSending.CompareAndSet(false, true))
             {
-                _client.Send(packet);
+                while (_sendQueue.TryDequeue(out var sendPacket))
+                {
+                    _client.Send(packet);
+                }
+                _isSending.Set(false);
+                
             }
         }
 

@@ -15,9 +15,8 @@ namespace PlayHouseConnector.Network
         //private readonly IConnectorListener _connectorListener;
         private readonly LOG<WsClient> _log = new();
         private readonly PacketParser _packetParser = new();
-        private readonly RingBufferStream _queueStream;
-        private readonly RingBuffer _recvBuffer = new(1024 * 1024);
-        private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024);
+        private readonly RingBuffer _recvBuffer = new(1024 * 1024 * 2);
+        private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024 * 2);
         private bool _stop;
 
         public WsClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)
@@ -30,7 +29,6 @@ namespace PlayHouseConnector.Network
             OptionReceiveBufferSize = 64 * 1024;
             OptionSendBufferSize = 64 * 1024;
 
-            _queueStream = new RingBufferStream(_recvBuffer);
         }
 
         public void ClientConnect()
@@ -105,11 +103,17 @@ namespace PlayHouseConnector.Network
 
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
-            Console.WriteLine($"Incoming: {Encoding.UTF8.GetString(buffer, (int)offset, (int)size)}");
-
-            _queueStream.Write(buffer, (int)offset, (int)size);
-            var packets = _packetParser.Parse(_recvBuffer);
-            packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
+            try
+            {
+                _recvBuffer.Write(buffer, offset, size);
+                var packets = _packetParser.Parse(_recvBuffer);
+                packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
+            }
+            catch (Exception ex)
+            {
+                _log.Error(() => $"OnReceived Exception - [exception:{ex}]");
+                Disconnect();
+            }
         }
 
         protected override void OnDisconnected()

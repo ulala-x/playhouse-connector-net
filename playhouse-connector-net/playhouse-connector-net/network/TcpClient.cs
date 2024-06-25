@@ -11,15 +11,13 @@ namespace PlayHouseConnector.Network
         private readonly ClientNetwork _clientNetwork;
         private readonly LOG<TcpClient> _log = new();
         private readonly PacketParser _packetParser = new();
-        private readonly RingBuffer _recvBuffer = new(1024 * 1024);
-        private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024);
-        private readonly RingBufferStream _stream;
+        private readonly RingBuffer _recvBuffer = new(PacketConst.MaxPacketSize);
+        private readonly PooledByteBuffer _sendBuffer = new(PacketConst.MaxPacketSize);
         private bool _stop;
 
         public TcpClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)
         {
             _clientNetwork = clientNetwork;
-            _stream = new RingBufferStream(_recvBuffer);
 
             OptionNoDelay = true;
             OptionKeepAlive = true;
@@ -95,7 +93,7 @@ namespace PlayHouseConnector.Network
         {
             try
             {
-                _stream.Write(buffer, (int)offset, (int)size);
+                _recvBuffer.Write(buffer, offset, size);
                 var packets = _packetParser.Parse(_recvBuffer);
                 packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
             }

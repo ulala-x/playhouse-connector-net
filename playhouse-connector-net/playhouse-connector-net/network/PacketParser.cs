@@ -88,45 +88,39 @@ namespace PlayHouseConnector.Network
 
             while (buffer.Count >= PacketConst.MinPacketSize)
             {
-                try
+                
+                int bodySize = buffer.PeekInt32(buffer.ReaderIndex);
+
+                if (bodySize > PacketConst.MaxPacketSize)
                 {
-
-                    int bodySize = buffer.PeekInt32(buffer.ReaderIndex);
-
-                    if (bodySize > PacketConst.MaxPacketSize)
-                    {
-                        _log.Error(() => $"Body size over : {bodySize}");
-                        throw new IndexOutOfRangeException("BodySizeOver");
-                    }
-
-                    // If the remaining buffer is smaller than the expected packet size, wait for more data
-                    if (buffer.Count < bodySize + PacketConst.MinPacketSize)
-                    {
-                        break;
-                    }
-
-                    buffer.Clear(4);
-
-                    var serviceId = buffer.ReadInt16();
-                    var sizeOfMsgId = buffer.ReadByte();
-                    var msgName = buffer.ReadString(sizeOfMsgId);
-
-                    var msgSeq = buffer.ReadInt16();
-                    var stageId = buffer.ReadInt64();
-                    var errorCode = buffer.ReadInt16();
-
-                    var body = new PooledByteBuffer(bodySize);
-
-                    buffer.Read(body, bodySize);
-
-                    var clientPacket = new ClientPacket(new Header(serviceId, msgName, msgSeq, errorCode, stageId), new PooledByteBufferPayload(body));
-                    packets.Add(clientPacket);
-
+                    _log.Error(() => $"Body size over : {bodySize}");
+                    throw new IndexOutOfRangeException("BodySizeOver");
                 }
-                catch (Exception ex)
+
+                // If the remaining buffer is smaller than the expected packet size, wait for more data
+                if (buffer.Count < bodySize + PacketConst.MinPacketSize)
                 {
-                    _log.Error(() => $"Exception while parsing packet - [exception:{ex}]");
+                    break;
                 }
+
+                buffer.Clear(sizeof(int));
+
+                var serviceId = buffer.ReadInt16();
+                var sizeOfMsgId = buffer.ReadByte();
+                var msgName = buffer.ReadString(sizeOfMsgId);
+
+                var msgSeq = buffer.ReadInt16();
+                var stageId = buffer.ReadInt64();
+                var errorCode = buffer.ReadInt16();
+
+                var body = new PooledByteBuffer(bodySize);
+
+                buffer.Read(body, bodySize);
+
+                var clientPacket = new ClientPacket(new Header(serviceId, msgName, msgSeq, errorCode, stageId), new PooledByteBufferPayload(body));
+                packets.Add(clientPacket);
+
+            
             }
 
             return packets;
