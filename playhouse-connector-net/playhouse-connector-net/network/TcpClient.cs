@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using CommonLib;
 using PlayHouse;
@@ -93,8 +94,12 @@ namespace PlayHouseConnector.Network
         {
             try
             {
-                _recvBuffer.Write(buffer, offset, size);
-                var packets = _packetParser.Parse(_recvBuffer);
+                List<ClientPacket> packets;
+                lock (_recvBuffer)
+                {
+                    _recvBuffer.Write(buffer, offset, size);
+                    packets = _packetParser.Parse(_recvBuffer);
+                }
                 packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
             }
             catch (Exception ex)
