@@ -27,7 +27,7 @@ namespace PlayHouseConnector
             }
             else
             {
-                _log.Error(() => "OnReceive is not initialized");
+                _log.Error(() => $"OnReceive is not initialized");
             }
         }
 
@@ -39,7 +39,7 @@ namespace PlayHouseConnector
             }
             else
             {
-                _log.Error(() => "CallReceiveEx is not initialized");
+                _log.Error(() => $"CallReceiveEx is not initialized");
             }
         }
 
@@ -68,7 +68,7 @@ namespace PlayHouseConnector
             }
             else
             {
-                _log.Error(() => "OnError is not initialized");
+                _log.Error(() => $"OnError is not initialized");
             }
         }
 
@@ -80,7 +80,7 @@ namespace PlayHouseConnector
             }
             else
             {
-                _log.Error(() => "OnErrorStage is not initialized");
+                _log.Error(() => $"OnErrorStage is not initialized");
             }
         }
 
@@ -97,7 +97,7 @@ namespace PlayHouseConnector
             }
             else
             {
-                _log.Error(() => "OnDisconnect is not initialized");
+                _log.Error(() => $"OnDisconnect is not initialized");
             }
         }
 

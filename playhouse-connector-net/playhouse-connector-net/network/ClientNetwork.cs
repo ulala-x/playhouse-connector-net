@@ -155,7 +155,7 @@ namespace PlayHouseConnector.Network
 
                     if (IsIdleState())
                     {
-                        _log.Debug(() => "Client disconnect cause idle time");
+                        _log.Debug(() => $"Client disconnect cause idle time");
                         Disconnect();
                     }
                 }
