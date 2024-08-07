@@ -26,6 +26,7 @@ namespace PlayHouseConnector.Network
         private TaskCompletionSource<bool>? _taskOnConnector;
         private readonly ConcurrentQueue<ClientPacket> _sendQueue =new();
         private readonly AtomicBoolean _isSending = new(false);
+        private readonly object _lockObject = new(); // 잠금 객체
 
         //private Timer _timer;
 
@@ -318,39 +319,41 @@ namespace PlayHouseConnector.Network
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request, long stageId,
             bool forAuthenticate = false)
         {
-            var seq = (ushort)_requestCache.GetSequence();
-
             var deferred = new TaskCompletionSource<IPacket>();
-
-            _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
+            lock (_lockObject)
             {
-                if (errorCode == 0)
+                var seq = (ushort)_requestCache.GetSequence();
+
+                _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
                 {
-                    if (forAuthenticate)
+                    if (errorCode == 0)
                     {
-                        _isAuthenticate = true;
+                        if (forAuthenticate)
+                        {
+                            _isAuthenticate = true;
+                        }
+
+                        if (_config.EnableLoggingResponseTime)
+                        {
+                            _stopwatch.Stop();
+                            _log.Debug(() =>
+                                $"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+                        }
+
+                        _asyncManager.AddJob(() => { deferred.SetResult(reply); });
                     }
-
-                    if (_config.EnableLoggingResponseTime)
+                    else
                     {
-                        _stopwatch.Stop();
-                        _log.Debug(() =>
-                            $"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
+                        _asyncManager.AddJob(() =>
+                        {
+                            deferred.SetException(new PlayConnectorException(serviceId, stageId, errorCode, request,
+                                seq));
+                        });
                     }
+                }));
 
-                    _asyncManager.AddJob(() => { deferred.SetResult(reply); });
-                }
-                else
-                {
-                    _asyncManager.AddJob(() =>
-                    {
-                        deferred.SetException(new PlayConnectorException(serviceId, stageId, errorCode, request,
-                            seq));
-                    });
-                }
-            }));
-
-            _Request(serviceId, request, stageId, seq);
+                _Request(serviceId, request, stageId, seq);
+            }
             return await deferred.Task;
         }
 
