@@ -23,8 +23,9 @@ namespace PlayHouseConnector.Network
             OptionNoDelay = true;
             OptionKeepAlive = true;
 
-            OptionReceiveBufferSize = 64 * 1024;
-            OptionSendBufferSize = 64 * 1024;
+            OptionSendBufferSize = 1024 * 64;
+            OptionReceiveBufferSize = 1024 * 256;
+            
         }
 
 
