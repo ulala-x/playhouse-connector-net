@@ -40,11 +40,11 @@ namespace PlayHouseConnector.Network
 
             if (_config.UseWebsocket)
             {
-                _client = new WsClient(_config.Host, _config.Port, this);
+                _client = new WsClient(_config.Host, _config.Port, this,_config.TurnOnTrace);
             }
             else
             {
-                _client = new TcpClient(_config.Host, _config.Port, this);
+                _client = new TcpClient(_config.Host, _config.Port, this, _config.TurnOnTrace);
             }
 
             //_timer = new Timer(TimerCallback, this, 100, 100);
@@ -236,7 +236,7 @@ namespace PlayHouseConnector.Network
             {
                 while (_sendQueue.TryDequeue(out var sendPacket))
                 {
-                    _client.Send(packet);
+                    _client.Send(sendPacket);
                 }
                 _isSending.Set(false);
                 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -19,8 +20,10 @@ namespace PlayHouseConnector.Network
         private readonly RingBuffer _recvBuffer = new(1024 * 1024 * 2);
         private readonly PooledByteBuffer _sendBuffer = new(1024 * 1024 * 2);
         private bool _stop;
+        private readonly bool _turnOnTrace;
 
-        public WsClient(string host, int port, ClientNetwork clientNetwork) : base(host, port)
+
+        public WsClient(string host, int port, ClientNetwork clientNetwork, bool turnOnTrace) : base(host, port)
         {
             _clientNetwork = clientNetwork;
 
@@ -30,6 +33,7 @@ namespace PlayHouseConnector.Network
             OptionSendBufferSize = 1024 * 64;
             OptionReceiveBufferSize = 1024 * 256;
 
+            _turnOnTrace = turnOnTrace;
         }
 
         public void ClientConnect()
@@ -61,6 +65,11 @@ namespace PlayHouseConnector.Network
         {
             using (clientPacket)
             {
+                if (_turnOnTrace)
+                {
+                    _log.Info(() => $"Send Packet : [{clientPacket.Header}]");
+                }
+
                 _sendBuffer.Clear();
                 clientPacket.GetBytes(_sendBuffer);
                 base.Send(_sendBuffer.Buffer(), 0, _sendBuffer.Count);
@@ -112,7 +121,14 @@ namespace PlayHouseConnector.Network
                     _recvBuffer.Write(buffer, offset, size);
                     packets = _packetParser.Parse(_recvBuffer);
                 }
-                packets.ForEach(packet => { _clientNetwork.OnReceive(packet); });
+                packets.ForEach(packet =>
+                {
+                    if (_turnOnTrace)
+                    {
+                        _log.Info(() => $"Received Packet : [{packet.Header}]");
+                    }
+                    _clientNetwork.OnReceive(packet);
+                });
             }
             catch (Exception ex)
             {

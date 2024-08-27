@@ -24,5 +24,7 @@
         //public bool UseExtendStage = false;
         public string Host { get; set; } = string.Empty;
         public int Port { get; set; } = 0;
+
+        public bool TurnOnTrace { get; set; } = false;
     }
 }
