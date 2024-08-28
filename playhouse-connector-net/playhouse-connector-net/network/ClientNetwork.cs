@@ -25,10 +25,7 @@ namespace PlayHouseConnector.Network
         private readonly Stopwatch _lastSendHeartBeatTime = new();
         private TaskCompletionSource<bool>? _taskOnConnector;
         private readonly ConcurrentQueue<ClientPacket> _sendQueue =new();
-        private readonly AtomicBoolean _isSending = new(false);
         private readonly object _lockObject = new(); // 잠금 객체
-
-        //private Timer _timer;
 
 
         public ClientNetwork(ConnectorConfig config, IConnectorCallback connectorCallback)
@@ -49,18 +46,43 @@ namespace PlayHouseConnector.Network
 
             //_timer = new Timer(TimerCallback, this, 100, 100);
             _lastSendHeartBeatTime.Start();
+
+            
+        }
+
+        private void SendProcess()
+        {
+            
+            while(IsConnect())
+            {
+                int count = 0;
+                while (_sendQueue.TryDequeue(out var sendPacket))
+                {
+                    _client.Send(sendPacket);
+                    count++;
+                    if (count > 10) //flow control max 100 / sec
+                    {
+                        Thread.Sleep(100);
+                        count = 0;
+                    }
+                }
+                Thread.Sleep(10);
+                //_isSending.Set(false);
+            }
         }
 
         public void OnConnected()
         {
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
+            var sendThread = new Thread(SendProcess);
+            sendThread.Start();
+
             if (_debugMode)
             {
                 SendDebugMode();
             }
 
-            //UpdateTime(ref _lastReceivedTime);
             _lastReceivedTime.Restart();
             _lastSendHeartBeatTime.Restart();
 
@@ -114,6 +136,7 @@ namespace PlayHouseConnector.Network
 
         public void OnDisconnected()
         {
+            
             _isAuthenticate = false;
             _asyncManager.AddJob(() =>
             {
@@ -232,15 +255,15 @@ namespace PlayHouseConnector.Network
         {
 
             _sendQueue.Enqueue(packet);
-            if (_isSending.CompareAndSet(false, true))
-            {
-                while (_sendQueue.TryDequeue(out var sendPacket))
-                {
-                    _client.Send(sendPacket);
-                }
-                _isSending.Set(false);
+            //if (_isSending.CompareAndSet(false, true))
+            //{
+            //    while (_sendQueue.TryDequeue(out var sendPacket))
+            //    {
+            //        _client.Send(sendPacket);
+            //    }
+            //    _isSending.Set(false);
                 
-            }
+            //}
         }
 
         private void _Request(ushort serviceId, IPacket packet, long stageId, ushort seq)
