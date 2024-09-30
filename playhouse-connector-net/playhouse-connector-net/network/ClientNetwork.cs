@@ -76,16 +76,9 @@ namespace PlayHouseConnector.Network
             {
                 if (IsConnect())
                 {
-                    int count = 0;
                     while (_sendQueue.TryDequeue(out var sendPacket))
                     {
                         _client.Send(sendPacket);
-                        count++;
-                        if (count > 10) //flow control max 100 / sec
-                        {
-                            Thread.Sleep(100);
-                            count = 0;
-                        }
                     }
                 }
             }
