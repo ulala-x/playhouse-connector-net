@@ -50,33 +50,58 @@ namespace PlayHouseConnector.Network
             
         }
 
-        private void SendProcess()
-        {
+        //private void SendProcess()
+        //{
             
-            while(IsConnect())
+        //    while(IsConnect())
+        //    {
+        //        int count = 0;
+        //        while (_sendQueue.TryDequeue(out var sendPacket))
+        //        {
+        //            _client.Send(sendPacket);
+        //            count++;
+        //            if (count > 10) //flow control max 100 / sec
+        //            {
+        //                Thread.Sleep(100);
+        //                count = 0;
+        //            }
+        //        }
+        //        Thread.Sleep(10);
+        //    }
+        //}
+
+        private void SendInQueue()
+        {
+            try
             {
-                int count = 0;
-                while (_sendQueue.TryDequeue(out var sendPacket))
+                if (IsConnect())
                 {
-                    _client.Send(sendPacket);
-                    count++;
-                    if (count > 10) //flow control max 100 / sec
+                    int count = 0;
+                    while (_sendQueue.TryDequeue(out var sendPacket))
                     {
-                        Thread.Sleep(100);
-                        count = 0;
+                        _client.Send(sendPacket);
+                        count++;
+                        if (count > 10) //flow control max 100 / sec
+                        {
+                            Thread.Sleep(100);
+                            count = 0;
+                        }
                     }
                 }
-                Thread.Sleep(10);
-                //_isSending.Set(false);
             }
+            catch (Exception ex)
+            {
+                _log.Error(() => $"{ex.StackTrace }");
+            }
+
         }
 
         public void OnConnected()
         {
             Thread.Sleep(TimeSpan.FromMilliseconds(300));
 
-            var sendThread = new Thread(SendProcess);
-            sendThread.Start();
+            //var sendThread = new Thread(SendProcess);
+            //sendThread.Start();
 
             if (_debugMode)
             {
@@ -383,13 +408,14 @@ namespace PlayHouseConnector.Network
         public void MainThreadAction()
         {
             UpdateClientConnection();
+            SendInQueue();
             _asyncManager.MainThreadAction();
         }
 
         public IEnumerator MainCoroutineAction()
         {
             UpdateClientConnection();
-
+            SendInQueue();
             return _asyncManager.MainCoroutineAction();
         }
 
