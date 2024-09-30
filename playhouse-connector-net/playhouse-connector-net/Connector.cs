@@ -207,20 +207,20 @@ namespace PlayHouseConnector
                 return;
             }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                if (OnErrorStage != null)
-                {
-                    OnErrorStage(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
-                }
-                else
-                {
-                    throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED,
-                        packet, 0);
-                }
+            //if (_clientNetwork!.IsAuthenticated() == false)
+            //{
+            //    if (OnErrorStage != null)
+            //    {
+            //        OnErrorStage(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, packet);
+            //    }
+            //    else
+            //    {
+            //        throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED,
+            //            packet, 0);
+            //    }
 
-                return;
-            }
+            //    return;
+            //}
 
             _clientNetwork!.Send(serviceId, packet, stageId);
         }
@@ -238,11 +238,11 @@ namespace PlayHouseConnector
                 return;
             }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                ErrorCallback(serviceId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
-                return;
-            }
+            //if (_clientNetwork!.IsAuthenticated() == false)
+            //{
+            //    ErrorCallback(serviceId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
+            //    return;
+            //}
 
             _clientNetwork!.Request(serviceId, request, callback, 0);
         }
@@ -255,11 +255,11 @@ namespace PlayHouseConnector
                 return;
             }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                ErrorStageCallback(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
-                return;
-            }
+            //if (_clientNetwork!.IsAuthenticated() == false)
+            //{
+            //    ErrorStageCallback(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request);
+            //    return;
+            //}
 
             _clientNetwork!.Request(serviceId, request, callback, stageId);
         }
@@ -281,10 +281,10 @@ namespace PlayHouseConnector
                 throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
             }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
-            }
+            //if (_clientNetwork!.IsAuthenticated() == false)
+            //{
+            //    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
+            //}
 
             return await _clientNetwork!.RequestAsync(serviceId, request, 0);
         }
@@ -297,11 +297,11 @@ namespace PlayHouseConnector
                     0);
             }
 
-            if (_clientNetwork!.IsAuthenticated() == false)
-            {
-                throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED,
-                    request, 0);
-            }
+            //if (_clientNetwork!.IsAuthenticated() == false)
+            //{
+            //    throw new PlayConnectorException(serviceId, stageId, (ushort)ConnectorErrorCode.UNAUTHENTICATED,
+            //        request, 0);
+            //}
 
 
             return await _clientNetwork!.RequestAsync(serviceId, request, stageId);
