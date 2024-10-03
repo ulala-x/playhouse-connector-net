@@ -16,7 +16,7 @@ namespace PlayHouseConnector.Network
         private readonly PooledByteBuffer _sendBuffer = new(PacketConst.MaxPacketSize);
         private bool _stop;
         private readonly bool _turnOnTrace;
-
+        private long _sid => Socket.Handle.ToInt64();
 
         public TcpClient(string host, int port, ClientNetwork clientNetwork, bool turnOnTrace) : base(host, port)
         {
@@ -77,17 +77,9 @@ namespace PlayHouseConnector.Network
             return _stop;
         }
 
-        public void DisconnectAndStop()
-        {
-            _stop = true;
-            DisconnectAsync();
-            while (IsConnected)
-                Thread.Yield();
-        }
-
         protected override void OnConnected()
         {
-            _log.Info(() => $"Tcp Socket client connected  - [sid:{Id}]");
+            _log.Info(() => $"Tcp Socket client connected  - [sid:{_sid}]");
 
             _clientNetwork.OnConnected();
             _stop = false;
@@ -95,7 +87,7 @@ namespace PlayHouseConnector.Network
 
         protected override void OnDisconnected()
         {
-            _log.Info(() => $"TCP client disconnected  - [sid:{Id}]");
+            _log.Info(() => $"TCP client disconnected  - [sid:{_sid}]");
             _clientNetwork.OnDisconnected();
         }
 

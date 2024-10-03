@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using CommonLib;
 using PlayHouse.Utils;
@@ -17,7 +16,6 @@ namespace PlayHouseConnector.Network
         private readonly IConnectorCallback _connectorCallback;
         private readonly LOG<ClientNetwork> _log = new();
         private readonly RequestCache _requestCache;
-        private readonly Stopwatch _stopwatch = new();
         private bool _connectChecker;
         private bool _debugMode;
         private bool _isAuthenticate;
@@ -32,7 +30,7 @@ namespace PlayHouseConnector.Network
         {
             _connectorCallback = connectorCallback;
             _config = config;
-            _requestCache = new RequestCache(_config.RequestTimeoutMs);
+            _requestCache = new RequestCache(_config.RequestTimeoutMs,_config.EnableLoggingResponseTime);
             PooledBuffer.Init(1024 * 1024);
 
             if (_config.UseWebsocket)
@@ -44,10 +42,7 @@ namespace PlayHouseConnector.Network
                 _client = new TcpClient(_config.Host, _config.Port, this, _config.TurnOnTrace);
             }
 
-            //_timer = new Timer(TimerCallback, this, 100, 100);
             _lastSendHeartBeatTime.Start();
-
-            
         }
 
         //private void SendProcess()
@@ -91,8 +86,7 @@ namespace PlayHouseConnector.Network
 
         public void OnConnected()
         {
-            Thread.Sleep(TimeSpan.FromMilliseconds(300));
-
+            //Thread.Sleep(TimeSpan.FromMilliseconds(300));
             //var sendThread = new Thread(SendProcess);
             //sendThread.Start();
 
@@ -127,6 +121,11 @@ namespace PlayHouseConnector.Network
             if (clientPacket.IsHeartBeat())
             {
                 return;
+            }
+
+            if (clientPacket.MsgSeq > 0)
+            {
+                _requestCache.TouchReceive(clientPacket.MsgSeq);
             }
 
             _asyncManager.AddJob(() =>
@@ -186,7 +185,6 @@ namespace PlayHouseConnector.Network
 
         private void UpdateClientConnection()
         {
-            //var network = (ClientNetwork)o!;
             if (_client.IsClientConnected())
             {
                 if (_debugMode == false)
@@ -202,17 +200,6 @@ namespace PlayHouseConnector.Network
                 }
             }
         }
-
-        //private void UpdateTime(ref DateTime time)
-        //{
-        //    time = DateTime.Now;
-        //}
-
-        //private long GetElapsedTime(DateTime lastTime)
-        //{
-        //    var timeDifference = DateTime.UtcNow - lastTime;
-        //    return (long)timeDifference.TotalMilliseconds;
-        //}
 
         private void SendHeartBeat()
         {
@@ -273,25 +260,10 @@ namespace PlayHouseConnector.Network
         {
 
             _sendQueue.Enqueue(packet);
-            //if (_isSending.CompareAndSet(false, true))
-            //{
-            //    while (_sendQueue.TryDequeue(out var sendPacket))
-            //    {
-            //        _client.Send(sendPacket);
-            //    }
-            //    _isSending.Set(false);
-                
-            //}
         }
 
         private void _Request(ushort serviceId, IPacket packet, long stageId, ushort seq)
         {
-            if (_config.EnableLoggingResponseTime)
-            {
-                _stopwatch.Reset();
-                _stopwatch.Start();
-            }
-
             var clientPacket = ClientPacket.ToServerOf(new TargetId(serviceId, stageId), packet);
             clientPacket.SetMsgSeq(seq);
             _Send(clientPacket);
@@ -311,14 +283,6 @@ namespace PlayHouseConnector.Network
 
             _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
             {
-                if (_config.EnableLoggingResponseTime)
-                {
-                    _stopwatch.Stop();
-                    _log.Debug(() =>
-                        $"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
-                }
-
-
                 _asyncManager.AddJob(() =>
                 {
                     if (errorCode == 0)
@@ -327,16 +291,6 @@ namespace PlayHouseConnector.Network
                         {
                             _isAuthenticate = true;
                         }
-
-                        //if (stageId > 0)
-                        //{
-                        //    _connectorCallback.CommonReplyExCallback(serviceId, stageId, request, reply);
-                        //}
-                        //else
-                        //{
-                        //    _connectorCallback.CommonReplyCallback(serviceId, request, reply);
-
-                        //}
 
                         callback.Invoke(reply);
                     }
@@ -372,13 +326,6 @@ namespace PlayHouseConnector.Network
                         if (forAuthenticate)
                         {
                             _isAuthenticate = true;
-                        }
-
-                        if (_config.EnableLoggingResponseTime)
-                        {
-                            _stopwatch.Stop();
-                            _log.Debug(() =>
-                                $"response time - [msgId:{request.MsgId},msgSeq:{seq},elapsedTime:{_stopwatch.ElapsedMilliseconds}]");
                         }
 
                         _asyncManager.AddJob(() => { deferred.SetResult(reply); });

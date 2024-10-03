@@ -43,23 +43,6 @@ namespace PlayHouseConnector
             }
         }
 
-        //public void CommonReplyCallback(ushort serviceId, IPacket request, IPacket reply)
-        //{
-        //    if (OnCommonReply != null)
-        //    {
-        //        OnCommonReply.Invoke(serviceId, request, reply);
-        //    }
-        //}
-
-        //public void CommonReplyExCallback(ushort serviceId,long stageId, IPacket request, IPacket reply)
-        //{
-
-        //    if (OnCommonReplyEx != null)
-        //    {
-        //        OnCommonReplyEx.Invoke(serviceId, stageId, request, reply);
-        //    }
-        //}
-
         public void ErrorCallback(ushort serviceId, ushort errorCode, IPacket request)
         {
             if (OnError != null)
