@@ -32,7 +32,6 @@ namespace PlayHouseConnector.Network
             _config = config;
             _requestCache = new RequestCache(_config.RequestTimeoutMs,_config.EnableLoggingResponseTime);
             PooledBuffer.Init(1024 * 1024);
-            Lz4Holder.Instance.Init(PacketConst.MaxBodySize);
 
             if (_config.UseWebsocket)
             {

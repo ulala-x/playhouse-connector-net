@@ -22,6 +22,7 @@ namespace PlayHouseConnector.Network
     public sealed class PacketParser
     {
         private LOG<PacketParser> _log = new();
+        private Lz4 _lz4 = new();
         public List<ClientPacket> Parse(RingBuffer buffer)
         {
             var packets = new List<ClientPacket>();
@@ -64,7 +65,7 @@ namespace PlayHouseConnector.Network
                     buffer.Read(body, bodySize);
 
                     var source = new ReadOnlySpan<byte>(buffer.Buffer(),0,bodySize);
-                    var decompressed =  Lz4Holder.Instance.Decompress(source, originalSize);
+                    var decompressed = _lz4.Decompress(source, originalSize);
 
                     body.Clear();
                     body.Write(decompressed);
