@@ -64,7 +64,7 @@ namespace PlayHouseConnector.Network
                     buffer.Read(body, bodySize);
 
                     var source = new ReadOnlySpan<byte>(buffer.Buffer(),0,bodySize);
-                    var decompressed =  LZ4.Decompress(source, originalSize);
+                    var decompressed =  Lz4.Decompress(source, originalSize);
 
                     body.Clear();
                     body.Write(decompressed);
