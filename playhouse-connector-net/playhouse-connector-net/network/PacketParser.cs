@@ -15,18 +15,15 @@ namespace PlayHouseConnector.Network
      *  2byte  msgSeq
      *  8byte  stageId
      *  2byte  errorCode
-     *  From Header Size = 3+2+1+2+8+2+N = 19 + n
+     *  4byte  original body size (if 0 not compressed)
+     *  From Header Size = 3+2+1+2+8+2+4+N = 23 + n
      * */
 
     public sealed class PacketParser
     {
-        
-        //public const int LENGTH_FIELD_SIZE = 3;
         private LOG<PacketParser> _log = new();
-
         public List<ClientPacket> Parse(RingBuffer buffer)
         {
-
             var packets = new List<ClientPacket>();
 
             while (buffer.Count >= PacketConst.MinPacketSize)
@@ -57,15 +54,30 @@ namespace PlayHouseConnector.Network
                 var msgSeq = buffer.ReadInt16();
                 var stageId = buffer.ReadInt64();
                 var errorCode = buffer.ReadInt16();
+                var originalSize = buffer.ReadInt32();
 
-                var body = new PooledByteBuffer(bodySize);
+                PooledByteBuffer body;
 
-                buffer.Read(body, bodySize);
+                if (originalSize > 0)//compressed
+                {
+                    body = new PooledByteBuffer(originalSize);
+                    buffer.Read(body, bodySize);
+
+                    var source = new ReadOnlySpan<byte>(buffer.Buffer(),0,bodySize);
+                    var decompressed =  LZ4.Decompress(source, originalSize);
+
+                    body.Clear();
+                    body.Write(decompressed);
+                }
+                else
+                {
+                    body = new PooledByteBuffer(bodySize);
+                    buffer.Read(body, bodySize);
+                }
 
                 var clientPacket = new ClientPacket(new Header(serviceId, msgName, msgSeq, errorCode, stageId), new PooledByteBufferPayload(body));
                 packets.Add(clientPacket);
 
-            
             }
 
             return packets;
