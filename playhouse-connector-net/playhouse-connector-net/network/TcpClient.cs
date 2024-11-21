@@ -12,8 +12,8 @@ namespace PlayHouseConnector.Network
         private readonly ClientNetwork _clientNetwork;
         private readonly LOG<TcpClient> _log = new();
         private readonly PacketParser _packetParser = new();
-        private readonly RingBuffer _recvBuffer = new(PacketConst.MaxPacketSize);
-        private readonly PooledByteBuffer _sendBuffer = new(PacketConst.MaxPacketSize);
+        private readonly RingBuffer _recvBuffer = new(PacketConst.MaxBodySize);
+        private readonly PooledByteBuffer _sendBuffer = new(PacketConst.MaxBodySize);
         private bool _stop;
         private readonly bool _turnOnTrace;
         private long _sid => Socket.Handle.ToInt64();

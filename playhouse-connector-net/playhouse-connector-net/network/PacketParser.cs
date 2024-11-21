@@ -26,12 +26,12 @@ namespace PlayHouseConnector.Network
         {
             var packets = new List<ClientPacket>();
 
-            while (buffer.Count >= PacketConst.MinPacketSize)
+            while (buffer.Count >= PacketConst.MinHeaderSize)
             {
                 
                 int bodySize = buffer.PeekInt32(buffer.ReaderIndex);
 
-                if (bodySize > PacketConst.MaxPacketSize)
+                if (bodySize > PacketConst.MaxBodySize)
                 {
                     _log.Error(() => $"Body size over : {bodySize}");
                     throw new IndexOutOfRangeException("BodySizeOver");
@@ -40,7 +40,7 @@ namespace PlayHouseConnector.Network
                 int checkSizeOfMsg = buffer.PeekByte(buffer.MoveIndex(buffer.ReaderIndex, 4 + 2));
 
                 // If the remaining buffer is smaller than the expected packet size, wait for more data
-                if (buffer.Count < bodySize + checkSizeOfMsg + PacketConst.MinPacketSize)
+                if (buffer.Count < bodySize + checkSizeOfMsg + PacketConst.MinHeaderSize)
                 {
                     break;
                 }
@@ -64,7 +64,7 @@ namespace PlayHouseConnector.Network
                     buffer.Read(body, bodySize);
 
                     var source = new ReadOnlySpan<byte>(buffer.Buffer(),0,bodySize);
-                    var decompressed =  Lz4.Decompress(source, originalSize);
+                    var decompressed =  Lz4Holder.Instance.Decompress(source, originalSize);
 
                     body.Clear();
                     body.Write(decompressed);

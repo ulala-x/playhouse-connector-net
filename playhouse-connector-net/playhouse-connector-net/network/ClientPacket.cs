@@ -136,7 +136,7 @@ namespace PlayHouseConnector.Network
             var body = Payload.Data;
             int bodySize = body.Length;
 
-            if (bodySize > PacketConst.MaxPacketSize)
+            if (bodySize > PacketConst.MaxBodySize)
             {
                 throw new Exception($"body size is over : {bodySize}");
             }
