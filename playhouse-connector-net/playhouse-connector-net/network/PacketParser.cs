@@ -6,7 +6,7 @@ using PlayHouse.Utils;
 
 namespace PlayHouseConnector.Network
 {
-  
+
     /*
      *  4byte  body size
      *  2byte  serviceId
@@ -29,7 +29,7 @@ namespace PlayHouseConnector.Network
 
             while (buffer.Count >= PacketConst.MinHeaderSize)
             {
-                
+
                 int bodySize = buffer.PeekInt32(buffer.ReaderIndex);
 
                 if (bodySize > PacketConst.MaxBodySize)
@@ -64,7 +64,7 @@ namespace PlayHouseConnector.Network
                     body = new PooledByteBuffer(originalSize);
                     buffer.Read(body, bodySize);
 
-                    var source = new ReadOnlySpan<byte>(buffer.Buffer(),0,bodySize);
+                    var source = new ReadOnlySpan<byte>(body.Buffer(), 0, bodySize);
                     var decompressed = _lz4.Decompress(source, originalSize);
 
                     body.Clear();
