@@ -69,6 +69,8 @@ namespace PlayHouseConnector.Network
 
                     body.Clear();
                     body.Write(decompressed);
+
+                    _log.Debug(()=>$"decompressed - [msgId:{msgName},originalSize:{originalSize},compressedSize:{bodySize}]");
                 }
                 else
                 {

@@ -112,6 +112,11 @@ namespace PlayHouseConnector
             _clientNetwork = new ClientNetwork(config, this);
         }
 
+        public void ClearCache()
+        {
+            _clientNetwork?.ClearCache();
+
+        }
         public void Connect(bool debugMode = false)
         {
             _disconnectFromClient = false;
@@ -267,7 +272,7 @@ namespace PlayHouseConnector
             return await _clientNetwork!.RequestAsync(serviceId, request, 0);
         }
 
-        public async Task<IPacket> RequestAsync(ushort serviceId,ushort msgSeq, IPacket request)
+        public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request, ushort msgSeq)
         {
             if (IsConnect() == false)
             {

@@ -84,6 +84,12 @@ namespace PlayHouseConnector.Network
 
         }
 
+        public void ClearCache()
+        {
+            _requestCache.Clear();
+        }
+
+
         public void OnConnected()
         {
             //Thread.Sleep(TimeSpan.FromMilliseconds(300));
