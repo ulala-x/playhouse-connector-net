@@ -264,12 +264,17 @@ namespace PlayHouseConnector
                 throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
             }
 
-            //if (_clientNetwork!.IsAuthenticated() == false)
-            //{
-            //    throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.UNAUTHENTICATED, request, 0);
-            //}
-
             return await _clientNetwork!.RequestAsync(serviceId, request, 0);
+        }
+
+        public async Task<IPacket> RequestAsync(ushort serviceId,ushort msgSeq, IPacket request)
+        {
+            if (IsConnect() == false)
+            {
+                throw new PlayConnectorException(serviceId, 0, (ushort)ConnectorErrorCode.DISCONNECTED, request, 0);
+            }
+
+            return await _clientNetwork!.RequestAsync(serviceId, msgSeq, request, 0);
         }
 
         public async Task<IPacket> RequestAsync(ushort serviceId, long stageId, IPacket request)

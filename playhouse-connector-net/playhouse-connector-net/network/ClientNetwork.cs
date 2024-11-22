@@ -275,6 +275,7 @@ namespace PlayHouseConnector.Network
             _Send(clientPacket);
         }
 
+
         public void Request(ushort serviceId, IPacket request, Action<IPacket> callback, long stageId,
             bool forSystem = false)
         {
@@ -314,10 +315,17 @@ namespace PlayHouseConnector.Network
         public async Task<IPacket> RequestAsync(ushort serviceId, IPacket request, long stageId,
             bool forAuthenticate = false)
         {
+            var seq = (ushort)_requestCache.GetSequence();
+            return await RequestAsync(serviceId, seq, request, stageId, forAuthenticate);
+        }
+
+        public async Task<IPacket> RequestAsync(ushort serviceId,ushort seq, IPacket request, long stageId,
+            bool forAuthenticate = false)
+        {
             var deferred = new TaskCompletionSource<IPacket>();
             lock (_lockObject)
             {
-                var seq = (ushort)_requestCache.GetSequence();
+                //var seq = (ushort)_requestCache.GetSequence();
 
                 _requestCache.Put(seq, new ReplyObject(seq, (errorCode, reply) =>
                 {
